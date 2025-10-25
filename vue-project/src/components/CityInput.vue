@@ -7,13 +7,27 @@
     ></gmpx-api-loader>
 
     <div class="input-wrapper">
-      <!-- Google Place Picker Component -->
-      <div class="place-picker-wrapper">
-        <gmpx-place-picker 
-          ref="placePicker"
-          placeholder="Enter city name or address (e.g. Toronto, Tokyo, Paris...)"
-          @gmpx-placechange="handlePlaceChange"
-        ></gmpx-place-picker>
+      <!-- Regular input with Place Picker hidden for auto-complete -->
+      <div class="input-group">
+        <input
+          v-model="cityName"
+          type="text"
+          placeholder="Enter city name (e.g. Toronto, Tokyo, Paris...)"
+          @keyup.enter="handleSearch"
+          @focus="showPlacePicker = true"
+          @input="onInputChange"
+          :disabled="loading"
+          class="city-input"
+        />
+        
+        <!-- Hidden Place Picker for autocomplete functionality -->
+        <div v-show="showPlacePicker && cityName.length > 0" class="place-picker-dropdown">
+          <gmpx-place-picker 
+            ref="placePicker"
+            :placeholder="cityName"
+            @gmpx-placechange="handlePlaceChange"
+          ></gmpx-place-picker>
+        </div>
       </div>
       
       <button 
@@ -55,10 +69,16 @@ const emit = defineEmits(['search'])
 
 const placePicker = ref(null)
 const cityName = ref('')
+const showPlacePicker = ref(false)
 const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 const popularCities = ['Tokyo', 'Paris', 'Toronto', 'New York', 'London', 'Barcelona', 'Dubai', 'Singapore']
 
-// Handle place selection change
+// Handle input change
+const onInputChange = () => {
+  showPlacePicker.value = cityName.value.length > 0
+}
+
+// Handle place selection change from Place Picker
 const handlePlaceChange = (event) => {
   const place = event.detail.place
   
@@ -82,6 +102,7 @@ const handlePlaceChange = (event) => {
     }
     
     cityName.value = city
+    showPlacePicker.value = false
     console.log('Selected place:', place)
     console.log('Extracted city:', city)
   }
@@ -89,17 +110,16 @@ const handlePlaceChange = (event) => {
 
 const handleSearch = () => {
   if (cityName.value.trim()) {
+    showPlacePicker.value = false
     emit('search', cityName.value.trim())
   }
 }
 
 const selectCity = (city) => {
   cityName.value = city
-  // Update place picker value
-  if (placePicker.value) {
-    placePicker.value.value = city
-  }
-  handleSearch()
+  showPlacePicker.value = false
+  // Don't auto-search, let user click the search button
+  console.log('Selected city:', city)
 }
 
 onMounted(() => {
@@ -124,22 +144,13 @@ onMounted(() => {
   align-items: stretch;
 }
 
-.place-picker-wrapper {
+.input-group {
   flex: 1;
-  display: flex;
+  position: relative;
 }
 
-/* Custom Google Place Picker styles */
-.place-picker-wrapper gmpx-place-picker {
+.city-input {
   width: 100%;
-  --gmpx-color-surface: #ffffff;
-  --gmpx-color-on-surface: #333333;
-  --gmpx-color-primary: #667eea;
-  --gmpx-font-family-base: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  --gmpx-font-size-base: 1.1rem;
-}
-
-.place-picker-wrapper gmpx-place-picker::part(input) {
   padding: 1rem 1.5rem;
   font-size: 1.1rem;
   border: 2px solid #ddd;
@@ -147,10 +158,40 @@ onMounted(() => {
   transition: all 0.3s;
 }
 
-.place-picker-wrapper gmpx-place-picker::part(input):focus {
+.city-input:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.city-input:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.place-picker-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.5rem;
+  z-index: 1000;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Custom Google Place Picker styles */
+.place-picker-dropdown gmpx-place-picker {
+  width: 100%;
+  --gmpx-color-surface: #ffffff;
+  --gmpx-color-on-surface: #333333;
+  --gmpx-color-primary: #667eea;
+  --gmpx-font-family-base: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --gmpx-font-size-base: 1rem;
 }
 
 .search-button {

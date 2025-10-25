@@ -25,31 +25,43 @@ ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 
 # Check which AI service to use (priority order)
+cerebras_client = None
+model = None
+
 if CEREBRAS_API_KEY:
-    logger.info("Using Cerebras API")
-    AI_SERVICE = 'cerebras'
     try:
         from cerebras.cloud.sdk import Cerebras
         cerebras_client = Cerebras(api_key=CEREBRAS_API_KEY)
-    except ImportError:
+        AI_SERVICE = 'cerebras'
+        logger.info("✅ Using Cerebras API")
+    except ImportError as e:
         logger.warning(
-            "Cerebras SDK not installed, falling back to next option")
+            f"Cerebras SDK not installed: {e}, falling back to next option")
         AI_SERVICE = None
-elif OPENROUTER_API_KEY:
-    logger.info("Using OpenRouter API")
+    except Exception as e:
+        logger.error(f"Failed to initialize Cerebras client: {e}")
+        AI_SERVICE = None
+
+if not AI_SERVICE and OPENROUTER_API_KEY:
     AI_SERVICE = 'openrouter'
-elif GEMINI_API_KEY:
-    logger.info("Using Gemini API")
-    AI_SERVICE = 'gemini'
+    logger.info("✅ Using OpenRouter API")
+
+if not AI_SERVICE and GEMINI_API_KEY:
     try:
         import google.generativeai as genai
         genai.configure(api_key=GEMINI_API_KEY)
         model = genai.GenerativeModel('gemini-pro')
-    except ImportError:
-        logger.warning("Gemini SDK not installed")
+        AI_SERVICE = 'gemini'
+        logger.info("✅ Using Gemini API")
+    except ImportError as e:
+        logger.warning(f"Gemini SDK not installed: {e}")
         AI_SERVICE = None
-else:
-    logger.warning("No AI API key found, will use sample data")
+    except Exception as e:
+        logger.error(f"Failed to initialize Gemini: {e}")
+        AI_SERVICE = None
+
+if not AI_SERVICE:
+    logger.warning("⚠️  No AI API configured, will use sample data")
     AI_SERVICE = None
 
 # Create temp folder
@@ -73,7 +85,11 @@ def health_check():
 
 def call_cerebras_api(prompt):
     """Call Cerebras API"""
+    if not cerebras_client:
+        raise Exception("Cerebras client not initialized")
+
     try:
+        logger.info("📡 Calling Cerebras API...")
         completion = cerebras_client.chat.completions.create(
             messages=[
                 {
@@ -90,9 +106,12 @@ def call_cerebras_api(prompt):
             top_p=0.8,
             max_completion_tokens=4000
         )
-        return completion.choices[0].message.content
+        response_content = completion.choices[0].message.content
+        logger.info(
+            f"✅ Cerebras API response received ({len(response_content)} chars)")
+        return response_content
     except Exception as e:
-        logger.error(f"Cerebras API error: {str(e)}")
+        logger.error(f"❌ Cerebras API error: {str(e)}")
         raise
 
 
@@ -307,7 +326,7 @@ def generate_poster():
 
 def get_sample_itinerary(city, days):
     """Return sample itinerary data"""
-    return {
+    sample_data = {
         "city": city,
         "days": days,
         "schedule": [
@@ -381,9 +400,16 @@ def get_sample_itinerary(city, days):
             "Respect local culture and customs, be mindful of your behavior",
             "Keep your personal belongings safe and stay aware of your surroundings",
             "Download translation apps and offline maps in case you need them"
-        ],
-        "places": []  # Will be filled later
+        ]
     }
+
+    # Flatten places list for map display
+    all_places = []
+    for day in sample_data['schedule']:
+        all_places.extend(day['places'])
+    sample_data['places'] = all_places
+
+    return sample_data
 
 
 if __name__ == '__main__':

@@ -88,7 +88,12 @@ const initMap = async () => {
 }
 
 const addMarkers = async () => {
-  if (!map || !props.places.length) return
+  if (!map || !props.places.length) {
+    console.log('No map or places:', { map: !!map, placesLength: props.places.length })
+    return
+  }
+
+  console.log(`Adding ${props.places.length} markers for ${props.city}`)
 
   // Clear old markers
   markers.forEach(marker => marker.setMap(null))
@@ -101,12 +106,16 @@ const addMarkers = async () => {
     const place = props.places[i]
     
     try {
+      const searchAddress = `${place.name}, ${props.city}`
+      console.log(`Geocoding: ${searchAddress}`)
+      
       const result = await geocoder.geocode({ 
-        address: `${place.name}, ${props.city}` 
+        address: searchAddress
       })
       
       if (result.results[0]) {
         const position = result.results[0].geometry.location
+        console.log(`✅ Found: ${place.name} at`, position.toJSON())
         
         const marker = new window.google.maps.Marker({
           position: position,
@@ -137,12 +146,22 @@ const addMarkers = async () => {
         bounds.extend(position)
       }
     } catch (err) {
-      console.error(`Failed to geocode ${place.name}:`, err)
+      console.error(`❌ Failed to geocode ${place.name}:`, err)
     }
   }
 
   if (markers.length > 0) {
+    console.log(`Fitting bounds for ${markers.length} markers`)
     map.fitBounds(bounds)
+    // Add a small delay and zoom out a bit for better view
+    setTimeout(() => {
+      const currentZoom = map.getZoom()
+      if (currentZoom > 15) {
+        map.setZoom(13)
+      }
+    }, 500)
+  } else {
+    console.warn('No markers were added to the map')
   }
 }
 

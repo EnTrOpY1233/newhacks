@@ -41,3 +41,4 @@ echo ""
 echo "✅ All TripTeller services stopped!"
 echo "================================="
 
+
