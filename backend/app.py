@@ -150,6 +150,7 @@ def generate_itinerary():
         city = data.get('city', '')
         days = data.get('days', 3)
         intensity = data.get('intensity', 'moderate')
+        preferences = data.get('preferences', [])
 
         if not city:
             return jsonify({'error': 'Please provide city name'}), 400
@@ -170,17 +171,24 @@ def generate_itinerary():
         intensity_desc = intensity_descriptions.get(
             intensity, intensity_descriptions['moderate'])
 
+        # Build preferences description
+        preference_desc = ""
+        if preferences:
+            pref_names = ', '.join(preferences)
+            preference_desc = f"\nUser Preferences: Focus on {pref_names} attractions and experiences. Prioritize these categories when selecting destinations."
+
         # Build prompt
         prompt = f"""
 Create a {days}-day travel itinerary for {city} with a {intensity} travel pace.
 
-Travel Intensity: {intensity_desc}
+Travel Intensity: {intensity_desc}{preference_desc}
 
 Requirements:
 1. Adjust number of attractions per day based on the {intensity} intensity level
-2. Include attraction name, description, suggested duration, category (historical, natural, food, etc.)
-3. Provide practical travel tips specific to the {intensity} pace
-4. Consider travel time between attractions for {intensity} travelers
+2. Include attraction name, description, suggested duration, category (historical, natural, food, culture, shopping, adventure, nightlife, art, etc.)
+3. {'IMPORTANT: Prioritize ' + ', '.join(preferences) + ' attractions based on user preferences' if preferences else 'Include a diverse mix of attractions'}
+4. Provide practical travel tips specific to the {intensity} pace
+5. Consider travel time between attractions for {intensity} travelers
 
 Return in JSON format with the following structure:
 {{

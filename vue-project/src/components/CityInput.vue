@@ -40,39 +40,7 @@
       </button>
     </div>
 
-    <!-- Travel Options -->
-    <div class="travel-options">
-      <div class="option-group">
-        <label class="option-label">Travel Duration:</label>
-        <div class="option-buttons">
-          <button 
-            v-for="day in [1, 3, 5, 7]" 
-            :key="day"
-            @click="selectDays(day)"
-            :class="['option-btn', { active: selectedDays === day }]"
-            :disabled="loading"
-          >
-            {{ day }} {{ day === 1 ? 'Day' : 'Days' }}
-          </button>
-        </div>
-      </div>
-
-      <div class="option-group">
-        <label class="option-label">Travel Intensity:</label>
-        <div class="option-buttons">
-          <button 
-            v-for="intensity in intensityOptions" 
-            :key="intensity.value"
-            @click="selectIntensity(intensity.value)"
-            :class="['option-btn', { active: selectedIntensity === intensity.value }]"
-            :disabled="loading"
-          >
-            {{ intensity.label }}
-          </button>
-        </div>
-      </div>
-    </div>
-    
+    <!-- Popular Cities - moved closer to search -->
     <div class="quick-cities">
       <span class="label">Popular Cities:</span>
       <button 
@@ -84,6 +52,56 @@
       >
         {{ city }}
       </button>
+    </div>
+
+    <!-- Travel Options -->
+    <div class="travel-options">
+      <div class="options-grid">
+        <div class="option-group">
+          <label class="option-label">Travel Duration:</label>
+          <div class="option-buttons">
+            <button 
+              v-for="day in [1, 3, 5, 7]" 
+              :key="day"
+              @click="selectDays(day)"
+              :class="['option-btn', { active: selectedDays === day }]"
+              :disabled="loading"
+            >
+              {{ day }} {{ day === 1 ? 'Day' : 'Days' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="option-group">
+          <label class="option-label">Travel Intensity:</label>
+          <div class="option-buttons">
+            <button 
+              v-for="intensity in intensityOptions" 
+              :key="intensity.value"
+              @click="selectIntensity(intensity.value)"
+              :class="['option-btn', { active: selectedIntensity === intensity.value }]"
+              :disabled="loading"
+            >
+              {{ intensity.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="option-group preferences-group">
+        <label class="option-label">Travel Preferences (select multiple):</label>
+        <div class="option-buttons">
+          <button 
+            v-for="pref in preferenceOptions" 
+            :key="pref.value"
+            @click="togglePreference(pref.value)"
+            :class="['option-btn', 'pref-btn', { active: selectedPreferences.includes(pref.value) }]"
+            :disabled="loading"
+          >
+            {{ pref.emoji }} {{ pref.label }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -109,10 +127,23 @@ const popularCities = ['Tokyo', 'Paris', 'Toronto', 'New York', 'London', 'Barce
 // Travel options
 const selectedDays = ref(3)
 const selectedIntensity = ref('moderate')
+const selectedPreferences = ref([])
+
 const intensityOptions = [
   { value: 'relaxed', label: 'Relaxed' },
   { value: 'moderate', label: 'Moderate' },
   { value: 'intensive', label: 'Intensive' }
+]
+
+const preferenceOptions = [
+  { value: 'food', label: 'Food', emoji: '🍽️' },
+  { value: 'historical', label: 'Historical', emoji: '🏛️' },
+  { value: 'natural', label: 'Natural', emoji: '🌳' },
+  { value: 'culture', label: 'Culture', emoji: '🎭' },
+  { value: 'shopping', label: 'Shopping', emoji: '🛍️' },
+  { value: 'adventure', label: 'Adventure', emoji: '🏔️' },
+  { value: 'nightlife', label: 'Nightlife', emoji: '🌃' },
+  { value: 'art', label: 'Art', emoji: '🎨' }
 ]
 
 const selectDays = (days) => {
@@ -125,10 +156,21 @@ const selectIntensity = (intensity) => {
   emitOptions()
 }
 
+const togglePreference = (pref) => {
+  const index = selectedPreferences.value.indexOf(pref)
+  if (index > -1) {
+    selectedPreferences.value.splice(index, 1)
+  } else {
+    selectedPreferences.value.push(pref)
+  }
+  emitOptions()
+}
+
 const emitOptions = () => {
   emit('options-change', {
     days: selectedDays.value,
-    intensity: selectedIntensity.value
+    intensity: selectedIntensity.value,
+    preferences: selectedPreferences.value
   })
 }
 
@@ -290,7 +332,9 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 0.8rem;
   align-items: center;
-  margin-top: 2rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #E5E5E5;
 }
 
 .label {
@@ -332,12 +376,19 @@ onMounted(() => {
   border: 1px solid #E5E5E5;
 }
 
-.option-group {
-  margin-bottom: 1.5rem;
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
 }
 
-.option-group:last-child {
+.option-group {
   margin-bottom: 0;
+}
+
+.preferences-group {
+  margin-top: 0;
 }
 
 .option-label {
@@ -382,6 +433,17 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
+.pref-btn {
+  min-width: 140px;
+}
+
+@media (max-width: 968px) {
+  .options-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
 @media (max-width: 768px) {
   .input-wrapper {
     flex-direction: column;
@@ -389,6 +451,10 @@ onMounted(() => {
   
   .search-button {
     width: 100%;
+  }
+  
+  .options-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

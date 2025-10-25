@@ -56,13 +56,15 @@ const currentAudio = ref(null)
 const posterImage = ref(null)
 const travelOptions = ref({
   days: 3,
-  intensity: 'moderate'
+  intensity: 'moderate',
+  preferences: []
 })
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 const handleOptionsChange = (options) => {
   travelOptions.value = options
+  console.log('Travel options updated:', options)
 }
 
 const handleCitySearch = async (city) => {
@@ -81,7 +83,8 @@ const handleCitySearch = async (city) => {
       body: JSON.stringify({ 
         city, 
         days: travelOptions.value.days,
-        intensity: travelOptions.value.intensity
+        intensity: travelOptions.value.intensity,
+        preferences: travelOptions.value.preferences
       })
     })
 
