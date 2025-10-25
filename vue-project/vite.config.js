@@ -28,6 +28,15 @@ export default defineConfig({
       '.ngrok-free.app',  // Allow any ngrok free app domain
       '.ngrok.io',        // Allow classic ngrok domains
       'localhost'
-    ]
+    ],
+    proxy: {
+      // Proxy API requests to backend
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+        ws: true
+      }
+    }
   }
 })

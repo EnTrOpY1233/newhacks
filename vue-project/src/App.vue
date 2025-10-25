@@ -79,7 +79,9 @@ const travelOptions = ref({
   preferences: []
 })
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+// Use environment variable or empty string for same-origin (proxied) requests
+// Empty string = relative URLs (e.g., "/api/...") which will be proxied by Vite dev server
+const API_BASE_URL = import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : 'http://localhost:5000'
 
 const handleOptionsChange = (options) => {
   travelOptions.value = options
