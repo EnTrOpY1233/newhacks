@@ -141,8 +141,8 @@ const handlePlayAudio = async (place) => {
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  background: #F7F7F8;
   min-height: 100vh;
 }
 
@@ -153,21 +153,36 @@ body {
 }
 
 .app-header {
-  background: rgba(255, 255, 255, 0.95);
+  background: transparent;
   padding: 2rem;
+  padding-bottom: 0;
   text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .app-header h1 {
-  font-size: 2.5rem;
-  color: #333;
+  background: white;
+  padding: 2.5rem 3rem;
+  border-radius: 12px;
+  border: 1px solid #E5E5E5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-size: 3rem;
+  color: #202123;
+  font-weight: 700;
   margin-bottom: 0.5rem;
 }
 
 .subtitle {
-  color: #666;
-  font-size: 1.1rem;
+  background: white;
+  padding: 1.5rem 3rem;
+  border-radius: 12px;
+  border: 1px solid #E5E5E5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  color: #6E6E80;
+  font-size: 1.3rem;
+  margin-top: 1rem;
 }
 
 .app-main {
@@ -179,12 +194,12 @@ body {
 }
 
 .error-message {
-  background: #fee;
-  color: #c33;
-  padding: 1rem;
+  background: #FEF2F2;
+  color: #991B1B;
+  padding: 1rem 1.5rem;
   border-radius: 8px;
   margin: 1rem 0;
-  border-left: 4px solid #c33;
+  border: 1px solid #FECACA;
 }
 
 .content-grid {
@@ -197,8 +212,9 @@ body {
 .left-panel, .right-panel {
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  border: 1px solid #E5E5E5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .poster-section {
@@ -222,11 +238,12 @@ body {
 }
 
 .app-footer {
-  background: rgba(0, 0, 0, 0.2);
-  color: white;
+  background: transparent;
+  color: #6E6E80;
   text-align: center;
   padding: 1.5rem;
   margin-top: 2rem;
+  font-size: 0.9rem;
 }
 
 @media (max-width: 968px) {

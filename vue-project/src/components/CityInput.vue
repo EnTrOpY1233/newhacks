@@ -193,15 +193,16 @@ onMounted(() => {
 <style scoped>
 .city-input-container {
   background: white;
-  padding: 2rem;
+  padding: 2.5rem;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #E5E5E5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .input-wrapper {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
   align-items: stretch;
 }
 
@@ -212,17 +213,19 @@ onMounted(() => {
 
 .city-input {
   width: 100%;
-  padding: 1rem 1.5rem;
+  padding: 1.2rem 1.8rem;
   font-size: 1.1rem;
-  border: 2px solid #ddd;
+  border: 1px solid #D1D5DB;
   border-radius: 8px;
-  transition: all 0.3s;
+  transition: all 0.2s;
+  background: white;
+  color: #202123;
 }
 
 .city-input:focus {
   outline: none;
-  border-color: #3B82F6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #10A37F;
+  box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1);
 }
 
 .city-input:disabled {
@@ -249,16 +252,16 @@ onMounted(() => {
 .place-picker-dropdown gmpx-place-picker {
   width: 100%;
   --gmpx-color-surface: #ffffff;
-  --gmpx-color-on-surface: #333333;
-  --gmpx-color-primary: #3B82F6;
-  --gmpx-font-family-base: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --gmpx-color-on-surface: #202123;
+  --gmpx-color-primary: #10A37F;
+  --gmpx-font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --gmpx-font-size-base: 1rem;
 }
 
 .search-button {
-  padding: 1rem 2rem;
+  padding: 1.2rem 2.5rem;
   font-size: 1.1rem;
-  background: #3B82F6;
+  background: #10A37F;
   color: white;
   border: none;
   border-radius: 8px;
@@ -269,8 +272,8 @@ onMounted(() => {
 }
 
 .search-button:hover:not(:disabled) {
-  background: #2563EB;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: #0E8C6D;
+  box-shadow: 0 2px 8px rgba(16, 163, 127, 0.2);
 }
 
 .search-button:active:not(:disabled) {
@@ -285,30 +288,34 @@ onMounted(() => {
 .quick-cities {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.8rem;
   align-items: center;
+  margin-top: 2rem;
 }
 
 .label {
-  color: #666;
+  color: #202123;
   font-weight: 600;
-  margin-right: 0.5rem;
+  margin-right: 0.8rem;
+  font-size: 1.05rem;
 }
 
 .city-tag {
-  padding: 0.5rem 1rem;
-  background: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 20px;
+  padding: 0.7rem 1.3rem;
+  background: #F7F7F8;
+  border: 1.5px solid #D1D5DB;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.9rem;
+  transition: all 0.15s;
+  font-size: 0.95rem;
+  color: #202123;
+  font-weight: 500;
 }
 
 .city-tag:hover:not(:disabled) {
-  background: #3B82F6;
+  background: #10A37F;
   color: white;
-  border-color: #3B82F6;
+  border-color: #10A37F;
 }
 
 .city-tag:disabled {
@@ -318,15 +325,15 @@ onMounted(() => {
 
 /* Travel Options */
 .travel-options {
-  margin: 1.5rem 0;
-  padding: 1.5rem;
-  background: #F8FAFC;
-  border-radius: 8px;
-  border: 1px solid #E2E8F0;
+  margin: 2rem 0;
+  padding: 2rem;
+  background: #FAFAFA;
+  border-radius: 10px;
+  border: 1px solid #E5E5E5;
 }
 
 .option-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .option-group:last-child {
@@ -336,39 +343,38 @@ onMounted(() => {
 .option-label {
   display: block;
   font-weight: 600;
-  color: #334155;
-  margin-bottom: 0.5rem;
-  font-size: 0.95rem;
+  color: #202123;
+  margin-bottom: 0.8rem;
+  font-size: 1.05rem;
 }
 
 .option-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.8rem;
   flex-wrap: wrap;
 }
 
 .option-btn {
-  padding: 0.6rem 1.2rem;
+  padding: 0.8rem 1.5rem;
   background: white;
-  border: 2px solid #E2E8F0;
+  border: 1.5px solid #D1D5DB;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.9rem;
+  transition: all 0.15s;
+  font-size: 0.95rem;
   font-weight: 500;
-  color: #64748B;
+  color: #202123;
 }
 
 .option-btn:hover:not(:disabled) {
-  border-color: #3B82F6;
-  color: #3B82F6;
-  background: #EFF6FF;
+  border-color: #10A37F;
+  background: #F7F7F8;
 }
 
 .option-btn.active {
-  background: #3B82F6;
+  background: #10A37F;
   color: white;
-  border-color: #3B82F6;
+  border-color: #10A37F;
 }
 
 .option-btn:disabled {

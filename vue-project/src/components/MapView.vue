@@ -32,6 +32,7 @@ const mapLoaded = ref(false)
 const error = ref(null)
 let map = null
 let markers = []
+let currentInfoWindow = null  // Track currently open InfoWindow
 
 const loadGoogleMaps = () => {
   return new Promise((resolve, reject) => {
@@ -98,6 +99,12 @@ const addMarkers = async () => {
   // Clear old markers
   markers.forEach(marker => marker.setMap(null))
   markers = []
+  
+  // Close any open InfoWindow
+  if (currentInfoWindow) {
+    currentInfoWindow.close()
+    currentInfoWindow = null
+  }
 
   const bounds = new window.google.maps.LatLngBounds()
   const geocoder = new window.google.maps.Geocoder()
@@ -131,15 +138,21 @@ const addMarkers = async () => {
 
         const infoWindow = new window.google.maps.InfoWindow({
           content: `
-            <div style="padding: 12px; max-width: 320px;">
-              <h3 style="margin: 0 0 12px 0; color: #1F2937; font-size: 18px; font-weight: 600;">${place.name}</h3>
-              <p style="margin: 0; color: #4B5563; font-size: 15px; line-height: 1.6;">${place.description || ''}</p>
+            <div style="padding: 16px; max-width: 340px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+              <h3 style="margin: 0 0 12px 0; color: #202123; font-size: 17px; font-weight: 600;">${place.name}</h3>
+              <p style="margin: 0; color: #565869; font-size: 14px; line-height: 1.7;">${place.description || ''}</p>
             </div>
           `
         })
 
         marker.addListener('click', () => {
+          // Close previously opened InfoWindow
+          if (currentInfoWindow) {
+            currentInfoWindow.close()
+          }
+          // Open new InfoWindow and track it
           infoWindow.open(map, marker)
+          currentInfoWindow = infoWindow
         })
 
         markers.push(marker)
@@ -184,9 +197,10 @@ watch(() => props.places, () => {
 }
 
 .map-container h2 {
-  color: #333;
-  margin-bottom: 1rem;
-  font-size: 1.8rem;
+  color: #202123;
+  margin-bottom: 1.2rem;
+  font-size: 2rem;
+  font-weight: 700;
 }
 
 .map {
@@ -195,7 +209,8 @@ watch(() => props.places, () => {
   border-radius: 8px;
   overflow: hidden;
   position: relative;
-  background: #e0e0e0;
+  background: #E5E5E5;
+  border: 1px solid #D1D5DB;
 }
 
 .map-loading {
@@ -210,17 +225,17 @@ watch(() => props.places, () => {
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
-  color: #666;
-  font-size: 1.1rem;
+  color: #6E6E80;
+  font-size: 1rem;
 }
 
 .map-error {
   margin-top: 1rem;
-  padding: 1rem;
-  background: #fee;
-  color: #c33;
+  padding: 1rem 1.5rem;
+  background: #FEF2F2;
+  color: #991B1B;
   border-radius: 6px;
-  border-left: 4px solid #c33;
+  border: 1px solid #FECACA;
 }
 </style>
 

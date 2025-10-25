@@ -58,41 +58,43 @@ defineEmits(['play-audio'])
 }
 
 .itinerary-container h2 {
-  color: #333;
-  margin-bottom: 0.5rem;
-  font-size: 1.8rem;
+  color: #202123;
+  margin-bottom: 0.8rem;
+  font-size: 2rem;
+  font-weight: 700;
 }
 
 .duration {
-  color: #666;
-  margin-bottom: 1.5rem;
-  font-size: 1rem;
+  color: #6E6E80;
+  margin-bottom: 2rem;
+  font-size: 1.15rem;
 }
 
 .day-section {
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .day-title {
-  color: #3B82F6;
-  font-size: 1.3rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #e0e0e0;
+  color: #10A37F;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid #E5E5E5;
 }
 
 .place-card {
-  background: #f9f9f9;
-  padding: 1.2rem;
+  background: #FAFAFA;
+  padding: 1.5rem;
   border-radius: 8px;
-  margin-bottom: 1rem;
-  border-left: 4px solid #3B82F6;
-  transition: transform 0.2s, box-shadow 0.2s;
+  margin-bottom: 1.2rem;
+  border: 1px solid #E5E5E5;
+  transition: all 0.15s;
 }
 
 .place-card:hover {
-  transform: translateX(4px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #10A37F;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .place-header {
@@ -103,62 +105,69 @@ defineEmits(['play-audio'])
 }
 
 .place-name {
-  color: #333;
-  font-size: 1.2rem;
+  color: #202123;
+  font-size: 1.35rem;
+  font-weight: 600;
   flex: 1;
 }
 
 .audio-button {
-  padding: 0.5rem 1rem;
-  background: #3B82F6;
+  padding: 0.7rem 1.3rem;
+  background: #10A37F;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.9rem;
+  transition: all 0.15s;
+  font-size: 0.95rem;
+  font-weight: 500;
 }
 
 .audio-button:hover {
-  background: #2563EB;
-  transform: scale(1.05);
+  background: #0E8C6D;
 }
 
 .place-description {
-  color: #555;
-  line-height: 1.6;
-  margin-bottom: 0.8rem;
+  color: #565869;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+  font-size: 1rem;
 }
 
 .place-details {
   display: flex;
-  gap: 1rem;
+  gap: 0.8rem;
   flex-wrap: wrap;
 }
 
 .detail-item {
-  color: #777;
+  color: #6E6E80;
   font-size: 0.9rem;
   background: white;
-  padding: 0.3rem 0.8rem;
+  padding: 0.4rem 0.9rem;
   border-radius: 4px;
+  border: 1px solid #E5E5E5;
 }
 
 .category {
-  background: #fff3cd;
-  color: #856404;
+  background: #FEF3C7;
+  color: #92400E;
+  border-color: #FDE68A;
 }
 
 .tips-section {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background: #e8f4f8;
+  margin-top: 2.5rem;
+  padding: 2rem;
+  background: #F0FDF4;
   border-radius: 8px;
+  border: 1px solid #D1FAE5;
 }
 
 .tips-section h3 {
-  color: #0277bd;
-  margin-bottom: 1rem;
+  color: #065F46;
+  margin-bottom: 1.2rem;
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
 .tips-section ul {
@@ -167,18 +176,21 @@ defineEmits(['play-audio'])
 }
 
 .tips-section li {
-  padding: 0.5rem 0;
-  padding-left: 1.5rem;
+  padding: 0.6rem 0;
+  padding-left: 2rem;
   position: relative;
-  color: #333;
+  color: #374151;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .tips-section li::before {
   content: "✓";
   position: absolute;
   left: 0;
-  color: #0277bd;
+  color: #10A37F;
   font-weight: bold;
+  font-size: 1.1rem;
 }
 </style>
 
