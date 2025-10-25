@@ -9,7 +9,7 @@
 node --version  # 应该 >= 20.19.0
 npm --version
 ```
-
+test adawadaw
 如果没安装：
 - 访问 https://nodejs.org/
 - 下载并安装 LTS 版本
