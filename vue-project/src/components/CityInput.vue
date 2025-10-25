@@ -10,18 +10,24 @@
       <!-- Regular input with Place Picker hidden for auto-complete -->
       <div class="input-group">
         <input
+          ref="cityInput"
           v-model="cityName"
           type="text"
+          inputmode="text"
+          autocomplete="off"
+          autocapitalize="words"
           placeholder="Enter city name (e.g. Toronto, Tokyo, Paris...)"
           @keyup.enter="handleSearch"
-          @focus="showPlacePicker = true"
+          @focus="handleInputFocus"
+          @blur="handleInputBlur"
           @input="onInputChange"
+          @touchstart="handleTouchStart"
           :disabled="loading || searching"
           class="city-input"
         />
         
-        <!-- Hidden Place Picker for autocomplete functionality -->
-        <div v-show="showPlacePicker && cityName.length > 0" class="place-picker-dropdown">
+        <!-- Hidden Place Picker for autocomplete functionality (disabled on mobile) -->
+        <div v-show="showPlacePicker && cityName.length > 0 && !isMobile" class="place-picker-dropdown">
           <gmpx-place-picker 
             ref="placePicker"
             :placeholder="cityName"
@@ -32,6 +38,7 @@
       
       <button 
         @click="handleSearch" 
+        @touchend.prevent="handleSearchTouch"
         :disabled="loading || searching || !cityName.trim()"
         class="search-button"
       >
@@ -159,7 +166,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 
 const props = defineProps({
   loading: {
@@ -171,10 +178,15 @@ const props = defineProps({
 const emit = defineEmits(['search', 'confirm-place', 'options-change'])
 
 const placePicker = ref(null)
+const cityInput = ref(null)
 const cityName = ref('')
 const showPlacePicker = ref(false)
 const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 const popularCities = ['Tokyo', 'Paris', 'Toronto', 'New York', 'London', 'Barcelona', 'Dubai', 'Shanghai']
+
+// Mobile detection
+const isMobile = ref(false)
+const isTouch = ref(false)
 
 // Place confirmation states
 const searching = ref(false)
@@ -233,9 +245,70 @@ const emitOptions = () => {
   })
 }
 
+/**
+ * Detect if device is mobile
+ */
+const detectMobile = () => {
+  // Check screen width
+  const isMobileWidth = window.innerWidth <= 768
+  
+  // Check user agent
+  const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  
+  // Check touch support
+  const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  
+  isMobile.value = isMobileWidth || isMobileUA
+  isTouch.value = hasTouch
+  
+  console.log('Mobile detection:', { isMobile: isMobile.value, isTouch: isTouch.value, width: window.innerWidth })
+}
+
+/**
+ * Handle input focus
+ */
+const handleInputFocus = () => {
+  if (!isMobile.value) {
+    showPlacePicker.value = true
+  }
+}
+
+/**
+ * Handle input blur with delay for place picker interaction
+ */
+const handleInputBlur = () => {
+  setTimeout(() => {
+    if (!isMobile.value) {
+      showPlacePicker.value = false
+    }
+  }, 200)
+}
+
+/**
+ * Handle touch start on input
+ */
+const handleTouchStart = () => {
+  // On mobile, ensure the input is focused properly
+  if (isMobile.value && cityInput.value) {
+    cityInput.value.focus()
+  }
+}
+
+/**
+ * Handle search button touch on mobile
+ */
+const handleSearchTouch = (e) => {
+  if (isMobile.value) {
+    e.preventDefault()
+    handleSearch()
+  }
+}
+
 // Handle input change
 const onInputChange = () => {
-  showPlacePicker.value = cityName.value.length > 0
+  if (!isMobile.value) {
+    showPlacePicker.value = cityName.value.length > 0
+  }
 }
 
 // Handle place selection change from Place Picker
@@ -347,6 +420,13 @@ onMounted(() => {
   if (!apiKey) {
     console.warn('Google Maps API Key not configured, Place Picker may not work properly')
   }
+  
+  // Detect mobile device
+  detectMobile()
+  
+  // Re-detect on window resize
+  window.addEventListener('resize', detectMobile)
+  
   // Emit initial options
   emitOptions()
 })
@@ -382,6 +462,8 @@ onMounted(() => {
   transition: all 0.2s;
   background: white;
   color: #202123;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .city-input:focus {
@@ -394,6 +476,15 @@ onMounted(() => {
   background: #f5f5f5;
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+/* Mobile-specific input styles */
+@media (max-width: 768px) {
+  .city-input {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: 1rem 1.2rem;
+    min-height: 48px; /* Minimum touch target */
+  }
 }
 
 .place-picker-dropdown {
@@ -431,6 +522,8 @@ onMounted(() => {
   transition: all 0.2s;
   font-weight: 600;
   white-space: nowrap;
+  touch-action: manipulation; /* Disable double-tap zoom */
+  -webkit-tap-highlight-color: rgba(16, 163, 127, 0.3);
 }
 
 .search-button:hover:not(:disabled) {
@@ -440,11 +533,22 @@ onMounted(() => {
 
 .search-button:active:not(:disabled) {
   transform: translateY(0);
+  background: #0D7A5E;
 }
 
 .search-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Mobile-specific button styles */
+@media (max-width: 768px) {
+  .search-button {
+    padding: 1rem 2rem;
+    font-size: 16px; /* Prevent zoom on iOS */
+    min-height: 48px; /* Minimum touch target */
+    min-width: 100px;
+  }
 }
 
 .quick-cities {
@@ -474,6 +578,8 @@ onMounted(() => {
   font-size: 0.95rem;
   color: #202123;
   font-weight: 500;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(16, 163, 127, 0.2);
 }
 
 .city-tag:hover:not(:disabled) {
@@ -482,9 +588,22 @@ onMounted(() => {
   border-color: #10A37F;
 }
 
+.city-tag:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .city-tag:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Mobile-specific city tag styles */
+@media (max-width: 768px) {
+  .city-tag {
+    padding: 0.8rem 1.4rem;
+    font-size: 14px;
+    min-height: 40px; /* Good touch target */
+  }
 }
 
 /* Travel Options */
@@ -535,11 +654,17 @@ onMounted(() => {
   font-size: 0.95rem;
   font-weight: 500;
   color: #202123;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(16, 163, 127, 0.2);
 }
 
 .option-btn:hover:not(:disabled) {
   border-color: #10A37F;
   background: #F7F7F8;
+}
+
+.option-btn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .option-btn.active {
@@ -555,6 +680,20 @@ onMounted(() => {
 
 .pref-btn {
   min-width: 140px;
+}
+
+/* Mobile-specific option button styles */
+@media (max-width: 768px) {
+  .option-btn {
+    padding: 0.9rem 1.3rem;
+    font-size: 14px;
+    min-height: 44px; /* Good touch target */
+  }
+  
+  .pref-btn {
+    min-width: 120px;
+    flex: 1 1 calc(50% - 0.4rem); /* Two columns on mobile */
+  }
 }
 
 /* Place Confirmation Modal */
@@ -660,6 +799,8 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.2s;
   background: white;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(16, 163, 127, 0.1);
 }
 
 .place-item:hover {
@@ -667,6 +808,23 @@ onMounted(() => {
   background: #F0FDF9;
   transform: translateX(4px);
   box-shadow: 0 2px 8px rgba(16, 163, 127, 0.1);
+}
+
+.place-item:active {
+  background: #E6F9F4;
+  transform: scale(0.99);
+}
+
+/* Mobile-specific place item styles */
+@media (max-width: 768px) {
+  .place-item {
+    padding: 1.5rem 1.2rem;
+    min-height: 80px; /* Good touch target for selections */
+  }
+  
+  .place-item:hover {
+    transform: none; /* Remove horizontal shift on touch devices */
+  }
 }
 
 .place-main {
