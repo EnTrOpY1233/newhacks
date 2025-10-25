@@ -134,6 +134,7 @@ const generateItinerary = async (place) => {
         }
       })
     })
+    
 
     if (!response.ok) {
       throw new Error('Failed to generate itinerary')
