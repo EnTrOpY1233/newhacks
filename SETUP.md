@@ -146,12 +146,19 @@ npm install
 
 ## 🎮 第四步：启动项目
 
-### 方法 1：使用启动脚本（推荐 - Linux/Mac）
+### 方法 1：使用启动脚本（推荐）
 
+#### Linux/Mac 用户
 ```bash
 cd newhacks
 chmod +x start.sh
 ./start.sh
+```
+
+#### Windows 用户
+```cmd
+cd newhacks
+start.bat
 ```
 
 ### 方法 2：手动启动
@@ -159,7 +166,8 @@ chmod +x start.sh
 **终端 1 - 启动后端**：
 ```bash
 cd backend
-source venv/bin/activate  # 激活虚拟环境
+source venv/bin/activate  # Linux/Mac - 激活虚拟环境
+# 或 venv\Scripts\activate  # Windows - 激活虚拟环境
 python app.py
 ```
 

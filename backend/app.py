@@ -27,6 +27,7 @@ GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 # Check which AI service to use (priority order)
 cerebras_client = None
 model = None
+AI_SERVICE = None
 
 if CEREBRAS_API_KEY:
     try:
