@@ -2,7 +2,7 @@
   <div class="audio-player-overlay" @click.self="$emit('close')">
     <div class="audio-player">
       <div class="player-header">
-        <h3>🎧 {{ title }}</h3>
+        <h3>{{ title }}</h3>
         <button @click="$emit('close')" class="close-button">✕</button>
       </div>
       
@@ -19,7 +19,7 @@
       </div>
       
       <div class="player-footer">
-        <p class="hint">🔊 Playing attraction audio guide</p>
+        <p class="hint">Playing attraction audio guide</p>
       </div>
     </div>
   </div>

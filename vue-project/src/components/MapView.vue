@@ -1,6 +1,6 @@
 <template>
   <div class="map-container">
-    <h2>🗺️ Route Map</h2>
+    <h2>Route Map</h2>
     <div ref="mapElement" class="map" :class="{ 'map-loading': !mapLoaded }">
       <div v-if="!mapLoaded" class="loading-overlay">
         <p>Loading map...</p>
@@ -131,9 +131,9 @@ const addMarkers = async () => {
 
         const infoWindow = new window.google.maps.InfoWindow({
           content: `
-            <div style="padding: 10px;">
-              <h3 style="margin: 0 0 8px 0; color: #333;">${place.name}</h3>
-              <p style="margin: 0; color: #666;">${place.description || ''}</p>
+            <div style="padding: 12px; max-width: 320px;">
+              <h3 style="margin: 0 0 12px 0; color: #1F2937; font-size: 18px; font-weight: 600;">${place.name}</h3>
+              <p style="margin: 0; color: #4B5563; font-size: 15px; line-height: 1.6;">${place.description || ''}</p>
             </div>
           `
         })

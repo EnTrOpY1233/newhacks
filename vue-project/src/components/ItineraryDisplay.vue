@@ -1,6 +1,6 @@
 <template>
   <div class="itinerary-container">
-    <h2>📅 {{ itinerary.city }} Travel Itinerary</h2>
+    <h2>{{ itinerary.city }} Travel Itinerary</h2>
     <p class="duration">{{ itinerary.days }} Day Trip</p>
 
     <div v-for="(day, index) in itinerary.schedule" :key="index" class="day-section">
@@ -14,7 +14,7 @@
             class="audio-button"
             :title="`Listen to ${place.name} introduction`"
           >
-            🔊 Play Audio
+            Play Audio
           </button>
         </div>
         
@@ -32,7 +32,7 @@
     </div>
 
     <div v-if="itinerary.tips" class="tips-section">
-      <h3>💡 Travel Tips</h3>
+      <h3>Travel Tips</h3>
       <ul>
         <li v-for="(tip, index) in itinerary.tips" :key="index">{{ tip }}</li>
       </ul>
@@ -74,7 +74,7 @@ defineEmits(['play-audio'])
 }
 
 .day-title {
-  color: #667eea;
+  color: #3B82F6;
   font-size: 1.3rem;
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
@@ -86,7 +86,7 @@ defineEmits(['play-audio'])
   padding: 1.2rem;
   border-radius: 8px;
   margin-bottom: 1rem;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #3B82F6;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -110,7 +110,7 @@ defineEmits(['play-audio'])
 
 .audio-button {
   padding: 0.5rem 1rem;
-  background: #667eea;
+  background: #3B82F6;
   color: white;
   border: none;
   border-radius: 6px;
@@ -120,7 +120,7 @@ defineEmits(['play-audio'])
 }
 
 .audio-button:hover {
-  background: #5568d3;
+  background: #2563EB;
   transform: scale(1.05);
 }
 

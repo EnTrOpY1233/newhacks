@@ -1,12 +1,12 @@
 <template>
   <div id="app">
     <header class="app-header">
-      <h1>✈️ TripTeller - AI Travel Guide</h1>
+      <h1>TripTeller - AI Travel Guide</h1>
       <p class="subtitle">Smart Travel Recommendations · Voice Narration · Route Planning</p>
     </header>
 
     <main class="app-main">
-      <CityInput @search="handleCitySearch" :loading="loading" />
+      <CityInput @search="handleCitySearch" :loading="loading" @options-change="handleOptionsChange" />
       
       <div v-if="error" class="error-message">
         {{ error }}
@@ -30,7 +30,7 @@
       />
 
       <div v-if="posterImage" class="poster-section">
-        <h3>🎨 Destination Poster</h3>
+        <h3>Destination Poster</h3>
         <img :src="posterImage" alt="Destination Poster" class="poster-image" />
       </div>
     </main>
@@ -54,8 +54,16 @@ const currentCity = ref('')
 const itinerary = ref(null)
 const currentAudio = ref(null)
 const posterImage = ref(null)
+const travelOptions = ref({
+  days: 3,
+  intensity: 'moderate'
+})
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
+const handleOptionsChange = (options) => {
+  travelOptions.value = options
+}
 
 const handleCitySearch = async (city) => {
   loading.value = true
@@ -70,7 +78,11 @@ const handleCitySearch = async (city) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ city, days: 3 })
+      body: JSON.stringify({ 
+        city, 
+        days: travelOptions.value.days,
+        intensity: travelOptions.value.intensity
+      })
     })
 
     if (!response.ok) {
@@ -130,7 +142,7 @@ const handlePlayAudio = async (place) => {
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
   min-height: 100vh;
 }
 

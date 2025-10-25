@@ -149,6 +149,7 @@ def generate_itinerary():
         data = request.get_json()
         city = data.get('city', '')
         days = data.get('days', 3)
+        intensity = data.get('intensity', 'moderate')
 
         if not city:
             return jsonify({'error': 'Please provide city name'}), 400
@@ -159,14 +160,27 @@ def generate_itinerary():
                 'itinerary': get_sample_itinerary(city, days)
             })
 
+        # Build intensity-specific requirements
+        intensity_descriptions = {
+            'relaxed': 'Relaxed pace with 2-3 attractions per day, plenty of rest time, focus on leisurely activities and relaxation. Allow 3-4 hours per attraction.',
+            'moderate': 'Balanced pace with 3-4 attractions per day, mix of activities and rest. Allow 2-3 hours per attraction.',
+            'intensive': 'Fast-paced with 4-6 attractions per day, maximize sightseeing, early starts and full days. Allow 1-2 hours per attraction.'
+        }
+
+        intensity_desc = intensity_descriptions.get(
+            intensity, intensity_descriptions['moderate'])
+
         # Build prompt
         prompt = f"""
-Create a {days}-day travel itinerary for {city}.
+Create a {days}-day travel itinerary for {city} with a {intensity} travel pace.
+
+Travel Intensity: {intensity_desc}
 
 Requirements:
-1. Recommend 3-5 attractions per day
+1. Adjust number of attractions per day based on the {intensity} intensity level
 2. Include attraction name, description, suggested duration, category (historical, natural, food, etc.)
-3. Provide practical travel tips
+3. Provide practical travel tips specific to the {intensity} pace
+4. Consider travel time between attractions for {intensity} travelers
 
 Return in JSON format with the following structure:
 {{
