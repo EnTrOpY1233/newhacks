@@ -14,12 +14,12 @@
           autoplay
           class="audio-element"
         >
-          您的浏览器不支持音频播放
+          Your browser does not support audio playback
         </audio>
       </div>
       
       <div class="player-footer">
-        <p class="hint">🔊 正在播放景点讲解</p>
+        <p class="hint">🔊 Playing attraction audio guide</p>
       </div>
     </div>
   </div>
@@ -35,7 +35,7 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: '景点讲解'
+    default: 'Attraction Guide'
   }
 })
 

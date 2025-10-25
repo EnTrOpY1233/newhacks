@@ -1,8 +1,8 @@
 <template>
   <div id="app">
     <header class="app-header">
-      <h1>✈️ TripTeller - AI 语音导游</h1>
-      <p class="subtitle">智能旅行推荐 · 语音讲解 · 路线规划</p>
+      <h1>✈️ TripTeller - AI Travel Guide</h1>
+      <p class="subtitle">Smart Travel Recommendations · Voice Narration · Route Planning</p>
     </header>
 
     <main class="app-main">
@@ -30,7 +30,7 @@
       />
 
       <div v-if="posterImage" class="poster-section">
-        <h3>🎨 目的地海报</h3>
+        <h3>🎨 Destination Poster</h3>
         <img :src="posterImage" alt="Destination Poster" class="poster-image" />
       </div>
     </main>
@@ -74,18 +74,18 @@ const handleCitySearch = async (city) => {
     })
 
     if (!response.ok) {
-      throw new Error('生成行程失败')
+      throw new Error('Failed to generate itinerary')
     }
 
     const data = await response.json()
     itinerary.value = data.itinerary
 
-    // 可选：生成海报
+    // Optional: Generate poster
     if (data.poster_url) {
       posterImage.value = data.poster_url
     }
   } catch (err) {
-    error.value = err.message || '发生错误，请重试'
+    error.value = err.message || 'An error occurred, please try again'
     console.error('Error:', err)
   } finally {
     loading.value = false
@@ -106,7 +106,7 @@ const handlePlayAudio = async (place) => {
     })
 
     if (!response.ok) {
-      throw new Error('生成语音失败')
+      throw new Error('Failed to generate audio')
     }
 
     const data = await response.json()
@@ -115,7 +115,7 @@ const handlePlayAudio = async (place) => {
       title: place.name
     }
   } catch (err) {
-    error.value = err.message || '语音生成失败'
+    error.value = err.message || 'Audio generation failed'
     console.error('Audio error:', err)
   }
 }

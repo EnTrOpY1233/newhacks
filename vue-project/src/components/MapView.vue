@@ -1,9 +1,9 @@
 <template>
   <div class="map-container">
-    <h2>🗺️ 路线地图</h2>
+    <h2>🗺️ Route Map</h2>
     <div ref="mapElement" class="map" :class="{ 'map-loading': !mapLoaded }">
       <div v-if="!mapLoaded" class="loading-overlay">
-        <p>加载地图中...</p>
+        <p>Loading map...</p>
       </div>
     </div>
     
@@ -43,7 +43,7 @@ const loadGoogleMaps = () => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
     
     if (!apiKey) {
-      error.value = '请在 .env 文件中配置 VITE_GOOGLE_MAPS_API_KEY'
+      error.value = 'Please configure VITE_GOOGLE_MAPS_API_KEY in .env file'
       reject(new Error('Missing API key'))
       return
     }
@@ -62,7 +62,7 @@ const initMap = async () => {
   try {
     await loadGoogleMaps()
     
-    const defaultCenter = { lat: 43.6532, lng: -79.3832 } // Toronto 默认
+    const defaultCenter = { lat: 43.6532, lng: -79.3832 } // Toronto default
     
     map = new window.google.maps.Map(mapElement.value, {
       center: defaultCenter,
@@ -83,14 +83,14 @@ const initMap = async () => {
     }
   } catch (err) {
     console.error('Failed to load Google Maps:', err)
-    error.value = '地图加载失败，请检查 API 密钥'
+    error.value = 'Failed to load map, please check API key'
   }
 }
 
 const addMarkers = async () => {
   if (!map || !props.places.length) return
 
-  // 清除旧标记
+  // Clear old markers
   markers.forEach(marker => marker.setMap(null))
   markers = []
 

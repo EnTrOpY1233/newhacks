@@ -1,10 +1,10 @@
 <template>
   <div class="itinerary-container">
-    <h2>📅 {{ itinerary.city }} 旅行行程</h2>
-    <p class="duration">{{ itinerary.days }} 天行程</p>
+    <h2>📅 {{ itinerary.city }} Travel Itinerary</h2>
+    <p class="duration">{{ itinerary.days }} Day Trip</p>
 
     <div v-for="(day, index) in itinerary.schedule" :key="index" class="day-section">
-      <h3 class="day-title">第 {{ index + 1 }} 天</h3>
+      <h3 class="day-title">Day {{ index + 1 }}</h3>
       
       <div v-for="(place, placeIndex) in day.places" :key="placeIndex" class="place-card">
         <div class="place-header">
@@ -12,9 +12,9 @@
           <button 
             @click="$emit('play-audio', place)" 
             class="audio-button"
-            :title="`听 ${place.name} 的介绍`"
+            :title="`Listen to ${place.name} introduction`"
           >
-            🔊 播放讲解
+            🔊 Play Audio
           </button>
         </div>
         
@@ -32,7 +32,7 @@
     </div>
 
     <div v-if="itinerary.tips" class="tips-section">
-      <h3>💡 旅行小贴士</h3>
+      <h3>💡 Travel Tips</h3>
       <ul>
         <li v-for="(tip, index) in itinerary.tips" :key="index">{{ tip }}</li>
       </ul>

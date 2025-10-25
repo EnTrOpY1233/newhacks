@@ -11,7 +11,7 @@
       <div class="place-picker-wrapper">
         <gmpx-place-picker 
           ref="placePicker"
-          placeholder="输入城市名称或地址（如：Toronto, Tokyo, Paris...）"
+          placeholder="Enter city name or address (e.g. Toronto, Tokyo, Paris...)"
           @gmpx-placechange="handlePlaceChange"
         ></gmpx-place-picker>
       </div>
@@ -21,13 +21,13 @@
         :disabled="loading || !cityName.trim()"
         class="search-button"
       >
-        <span v-if="!loading">🔍 搜索</span>
-        <span v-else>⏳ 生成中...</span>
+        <span v-if="!loading">🔍 Search</span>
+        <span v-else>⏳ Generating...</span>
       </button>
     </div>
     
     <div class="quick-cities">
-      <span class="label">热门城市：</span>
+      <span class="label">Popular Cities:</span>
       <button 
         v-for="city in popularCities" 
         :key="city"
@@ -58,15 +58,15 @@ const cityName = ref('')
 const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 const popularCities = ['Tokyo', 'Paris', 'Toronto', 'New York', 'London', 'Barcelona', 'Dubai', 'Singapore']
 
-// 处理地点选择变化
+// Handle place selection change
 const handlePlaceChange = (event) => {
   const place = event.detail.place
   
   if (place) {
-    // 尝试从地点中提取城市名
+    // Try to extract city name from place
     let city = ''
     
-    // 优先使用 locality (城市名)
+    // Priority: use locality (city name)
     const localityComponent = place.address_components?.find(
       component => component.types.includes('locality')
     )
@@ -74,7 +74,7 @@ const handlePlaceChange = (event) => {
     if (localityComponent) {
       city = localityComponent.long_name
     } else {
-      // 如果没有 locality，尝试使用 administrative_area_level_1 (州/省)
+      // If no locality, try administrative_area_level_1 (state/province)
       const adminComponent = place.address_components?.find(
         component => component.types.includes('administrative_area_level_1')
       )
@@ -95,7 +95,7 @@ const handleSearch = () => {
 
 const selectCity = (city) => {
   cityName.value = city
-  // 更新 place picker 的值
+  // Update place picker value
   if (placePicker.value) {
     placePicker.value.value = city
   }
@@ -104,7 +104,7 @@ const selectCity = (city) => {
 
 onMounted(() => {
   if (!apiKey) {
-    console.warn('Google Maps API Key 未配置，Place Picker 可能无法正常工作')
+    console.warn('Google Maps API Key not configured, Place Picker may not work properly')
   }
 })
 </script>
@@ -129,7 +129,7 @@ onMounted(() => {
   display: flex;
 }
 
-/* 自定义 Google Place Picker 样式 */
+/* Custom Google Place Picker styles */
 .place-picker-wrapper gmpx-place-picker {
   width: 100%;
   --gmpx-color-surface: #ffffff;
