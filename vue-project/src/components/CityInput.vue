@@ -116,33 +116,50 @@
     <!-- Travel Options -->
     <div class="travel-options">
       <div class="options-grid">
+        <!-- Travel Duration Slider -->
         <div class="option-group">
-          <label class="option-label">Travel Duration:</label>
-          <div class="option-buttons">
-            <button 
-              v-for="day in [1, 3, 5, 7]" 
-              :key="day"
-              @click="selectDays(day)"
-              :class="['option-btn', { active: selectedDays === day }]"
+          <label class="option-label">
+            Travel Duration: <span class="value-display">{{ selectedDays }} {{ selectedDays === 1 ? 'Day' : 'Days' }}</span>
+          </label>
+          <div class="slider-container">
+            <input 
+              type="range" 
+              v-model.number="selectedDays"
+              @input="onDaysChange"
+              min="1" 
+              max="14" 
+              step="1"
               :disabled="loading"
-            >
-              {{ day }} {{ day === 1 ? 'Day' : 'Days' }}
-            </button>
+              class="duration-slider"
+            />
+            <div class="slider-labels">
+              <span>1 Day</span>
+              <span>14 Days</span>
+            </div>
           </div>
         </div>
 
+        <!-- Travel Intensity Slider -->
         <div class="option-group">
-          <label class="option-label">Travel Intensity:</label>
-          <div class="option-buttons">
-            <button 
-              v-for="intensity in intensityOptions" 
-              :key="intensity.value"
-              @click="selectIntensity(intensity.value)"
-              :class="['option-btn', { active: selectedIntensity === intensity.value }]"
+          <label class="option-label">
+            Travel Intensity: <span class="value-display">{{ currentIntensityLabel }}</span>
+          </label>
+          <div class="slider-container">
+            <input 
+              type="range" 
+              v-model.number="intensitySliderValue"
+              @input="onIntensityChange"
+              min="0" 
+              max="2" 
+              step="1"
               :disabled="loading"
-            >
-              {{ intensity.label }}
-            </button>
+              class="intensity-slider"
+            />
+            <div class="slider-labels intensity-labels">
+              <span>Relaxed</span>
+              <span>Moderate</span>
+              <span>Intensive</span>
+            </div>
           </div>
         </div>
       </div>
@@ -200,11 +217,20 @@ const selectedDays = ref(3)
 const selectedIntensity = ref('moderate')
 const selectedPreferences = ref([])
 
+// Intensity slider mapping
+const intensitySliderValue = ref(1) // 0 = relaxed, 1 = moderate, 2 = intensive
+
 const intensityOptions = [
   { value: 'relaxed', label: 'Relaxed' },
   { value: 'moderate', label: 'Moderate' },
   { value: 'intensive', label: 'Intensive' }
 ]
+
+// Computed property for current intensity label
+const currentIntensityLabel = computed(() => {
+  const labels = ['Relaxed', 'Moderate', 'Intensive']
+  return labels[intensitySliderValue.value] || 'Moderate'
+})
 
 const preferenceOptions = [
   { value: 'food', label: 'Food', emoji: '🍽️' },
@@ -217,6 +243,23 @@ const preferenceOptions = [
   { value: 'art', label: 'Art', emoji: '🎨' }
 ]
 
+/**
+ * Handle days slider change
+ */
+const onDaysChange = () => {
+  emitOptions()
+}
+
+/**
+ * Handle intensity slider change
+ */
+const onIntensityChange = () => {
+  // Map slider value (0, 1, 2) to intensity string
+  const intensityMap = ['relaxed', 'moderate', 'intensive']
+  selectedIntensity.value = intensityMap[intensitySliderValue.value]
+  emitOptions()
+}
+
 const selectDays = (days) => {
   selectedDays.value = days
   emitOptions()
@@ -224,6 +267,9 @@ const selectDays = (days) => {
 
 const selectIntensity = (intensity) => {
   selectedIntensity.value = intensity
+  // Update slider position
+  const intensityMap = { 'relaxed': 0, 'moderate': 1, 'intensive': 2 }
+  intensitySliderValue.value = intensityMap[intensity] || 1
   emitOptions()
 }
 
@@ -635,8 +681,145 @@ onMounted(() => {
   display: block;
   font-weight: 600;
   color: #202123;
-  margin-bottom: 0.8rem;
+  margin-bottom: 1.2rem;
   font-size: 1.05rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.value-display {
+  color: #10A37F;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* Slider Container */
+.slider-container {
+  margin-top: 0.5rem;
+}
+
+/* Range Slider Styles */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: #E5E7EB;
+  outline: none;
+  opacity: 0.9;
+  transition: opacity 0.2s;
+  cursor: pointer;
+  margin: 8px 0; /* Add vertical margin for better alignment */
+}
+
+input[type="range"]:hover {
+  opacity: 1;
+}
+
+input[type="range"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #10A37F;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s;
+  margin-top: -8px; /* Center the thumb on the track */
+  position: relative;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: #0E8C6D;
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(16, 163, 127, 0.3);
+}
+
+input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #10A37F;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s;
+  position: relative;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  background: #0E8C6D;
+  transform: scale(1.1);
+  box-shadow: 0 3px 6px rgba(16, 163, 127, 0.3);
+}
+
+input[type="range"]:active::-moz-range-thumb {
+  transform: scale(1.2);
+}
+
+/* Track styling */
+input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: linear-gradient(to right, #10A37F 0%, #10A37F var(--value), #E5E7EB var(--value), #E5E7EB 100%);
+}
+
+input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: #E5E7EB;
+}
+
+/* Duration slider - gradient from green */
+.duration-slider {
+  background: linear-gradient(to right, #10A37F 0%, #34D399 100%);
+}
+
+/* Intensity slider - gradient from blue to red */
+.intensity-slider {
+  background: linear-gradient(to right, #60A5FA 0%, #FBBF24 50%, #F87171 100%);
+}
+
+/* Slider Labels */
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #6B7280;
+}
+
+.intensity-labels {
+  justify-content: space-between;
+}
+
+.intensity-labels span {
+  flex: 1;
+  text-align: center;
+}
+
+.intensity-labels span:first-child {
+  text-align: left;
+}
+
+.intensity-labels span:last-child {
+  text-align: right;
 }
 
 .option-buttons {
@@ -889,6 +1072,33 @@ onMounted(() => {
 
 .btn-cancel:hover {
   background: #E5E7EB;
+}
+
+/* Mobile-specific slider styles */
+@media (max-width: 768px) {
+  input[type="range"]::-webkit-slider-thumb {
+    width: 28px;
+    height: 28px; /* Larger thumb for easier touch */
+    margin-top: -9px; /* Center the larger thumb on mobile */
+  }
+  
+  input[type="range"]::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+  }
+  
+  input[type="range"] {
+    height: 10px; /* Slightly taller track on mobile */
+    margin: 10px 0; /* More margin on mobile for better spacing */
+  }
+  
+  .slider-labels {
+    font-size: 0.8rem;
+  }
+  
+  .value-display {
+    font-size: 1rem;
+  }
 }
 
 @media (max-width: 968px) {
