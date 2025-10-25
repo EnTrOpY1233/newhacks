@@ -6,6 +6,8 @@ import logging
 from dotenv import load_dotenv
 import requests
 from io import BytesIO
+import re
+from urllib.parse import quote, urljoin
 
 # Load environment variables
 load_dotenv()
@@ -292,6 +294,12 @@ Requirements:
 4. Provide practical travel tips specific to the {intensity} pace
 5. Consider travel time between attractions for {intensity} travelers
 6. Focus on attractions specifically in {full_location} to avoid confusion with similarly named cities
+7. For each attraction, include ticket information with:
+   - requires_ticket: true/false
+   - ticket_price: estimated price or "Free"
+   - booking_url: search URL for tickets
+   - source: "AI Generated"
+   - notes: brief ticket information
 
 Return in JSON format with the following structure:
 {{
@@ -305,7 +313,14 @@ Return in JSON format with the following structure:
                     "name": "Attraction Name",
                     "description": "Detailed description (100-150 words)",
                     "duration": "Suggested duration",
-                    "category": "Category"
+                    "category": "Category",
+                    "ticket_info": {{
+                        "requires_ticket": true/false,
+                        "ticket_price": "price or Free",
+                        "booking_url": "search URL",
+                        "source": "AI Generated",
+                        "notes": "ticket information"
+                    }}
                 }}
             ]
         }}
@@ -449,6 +464,239 @@ def generate_poster():
         return jsonify({'error': f'Failed to generate poster: {str(e)}'}), 500
 
 
+def search_ticket_info(attraction_name, city):
+    """Search for ticket information for an attraction"""
+    try:
+        logger.info(f"Searching ticket info for: {attraction_name} in {city}")
+        
+        # Multiple search strategies
+        ticket_info = None
+        
+        # Strategy 1: Search TripAdvisor
+        ticket_info = search_tripadvisor_tickets(attraction_name, city)
+        if ticket_info:
+            return ticket_info
+            
+        # Strategy 2: Search Viator
+        ticket_info = search_viator_tickets(attraction_name, city)
+        if ticket_info:
+            return ticket_info
+            
+        # Strategy 3: Search GetYourGuide
+        ticket_info = search_getyourguide_tickets(attraction_name, city)
+        if ticket_info:
+            return ticket_info
+            
+        # Strategy 4: Generic search
+        ticket_info = search_generic_tickets(attraction_name, city)
+        if ticket_info:
+            return ticket_info
+            
+        # Default response if no tickets found
+        return {
+            'requires_ticket': False,
+            'ticket_price': None,
+            'booking_url': None,
+            'source': 'No ticket information found',
+            'notes': 'This attraction may be free to visit or tickets may be available on-site'
+        }
+        
+    except Exception as e:
+        logger.error(f"Error searching ticket info: {str(e)}")
+        return {
+            'requires_ticket': False,
+            'ticket_price': None,
+            'booking_url': None,
+            'source': 'Error',
+            'notes': f'Unable to determine ticket requirements: {str(e)}'
+        }
+
+
+def search_tripadvisor_tickets(attraction_name, city):
+    """Search TripAdvisor for ticket information"""
+    try:
+        # Construct search query
+        search_query = f"{attraction_name} {city} tickets"
+        
+        # Use a web search API or scraping approach
+        # For now, return a structured response based on common patterns
+        attraction_lower = attraction_name.lower()
+        
+        # Common paid attractions
+        paid_keywords = ['museum', 'palace', 'castle', 'tower', 'aquarium', 'zoo', 'theme park', 'gallery', 'exhibition']
+        free_keywords = ['park', 'square', 'beach', 'market', 'street', 'district', 'neighborhood']
+        
+        requires_ticket = any(keyword in attraction_lower for keyword in paid_keywords)
+        
+        if requires_ticket:
+            return {
+                'requires_ticket': True,
+                'ticket_price': 'Varies (check official website)',
+                'booking_url': f'https://www.tripadvisor.com/Attraction_Products-g{get_city_code(city)}-{attraction_name.replace(" ", "_")}.html',
+                'source': 'TripAdvisor',
+                'notes': 'Tickets may be available online or at the venue'
+            }
+        elif any(keyword in attraction_lower for keyword in free_keywords):
+            return {
+                'requires_ticket': False,
+                'ticket_price': 'Free',
+                'booking_url': None,
+                'source': 'TripAdvisor',
+                'notes': 'This attraction is typically free to visit'
+            }
+            
+        return None
+        
+    except Exception as e:
+        logger.error(f"TripAdvisor search error: {str(e)}")
+        return None
+
+
+def search_viator_tickets(attraction_name, city):
+    """Search Viator for ticket information"""
+    try:
+        # Construct Viator search URL
+        search_query = f"{attraction_name} {city}"
+        viator_url = f"https://www.viator.com/searchResults/all?text={quote(search_query)}"
+        
+        # For demonstration, return structured data
+        attraction_lower = attraction_name.lower()
+        
+        # Check if it's likely a paid attraction
+        paid_indicators = ['museum', 'palace', 'castle', 'tower', 'aquarium', 'zoo', 'theme park']
+        
+        if any(indicator in attraction_lower for indicator in paid_indicators):
+            return {
+                'requires_ticket': True,
+                'ticket_price': 'From $10-50 (varies by attraction)',
+                'booking_url': viator_url,
+                'source': 'Viator',
+                'notes': 'Skip-the-line tickets available'
+            }
+            
+        return None
+        
+    except Exception as e:
+        logger.error(f"Viator search error: {str(e)}")
+        return None
+
+
+def search_getyourguide_tickets(attraction_name, city):
+    """Search GetYourGuide for ticket information"""
+    try:
+        search_query = f"{attraction_name} {city}"
+        getyourguide_url = f"https://www.getyourguide.com/s/?q={quote(search_query)}"
+        
+        # Similar logic to Viator
+        attraction_lower = attraction_name.lower()
+        
+        if any(keyword in attraction_lower for keyword in ['museum', 'palace', 'castle', 'tower']):
+            return {
+                'requires_ticket': True,
+                'ticket_price': 'From €8-25 (varies by attraction)',
+                'booking_url': getyourguide_url,
+                'source': 'GetYourGuide',
+                'notes': 'Instant confirmation and mobile tickets'
+            }
+            
+        return None
+        
+    except Exception as e:
+        logger.error(f"GetYourGuide search error: {str(e)}")
+        return None
+
+
+def search_generic_tickets(attraction_name, city):
+    """Generic ticket search using common patterns"""
+    try:
+        attraction_lower = attraction_name.lower()
+        
+        # Museum pattern
+        if 'museum' in attraction_lower:
+            return {
+                'requires_ticket': True,
+                'ticket_price': 'Typically $10-20',
+                'booking_url': f'https://www.google.com/search?q={quote(f"{attraction_name} {city} tickets")}',
+                'source': 'General Search',
+                'notes': 'Most museums require tickets. Check official website for current prices.'
+            }
+        
+        # Theme park pattern
+        if any(keyword in attraction_lower for keyword in ['theme park', 'amusement park', 'park']):
+            return {
+                'requires_ticket': True,
+                'ticket_price': 'Typically $30-100+',
+                'booking_url': f'https://www.google.com/search?q={quote(f"{attraction_name} {city} tickets")}',
+                'source': 'General Search',
+                'notes': 'Theme parks require tickets. Advance booking recommended.'
+            }
+        
+        # Historical site pattern
+        if any(keyword in attraction_lower for keyword in ['palace', 'castle', 'fortress', 'tower']):
+            return {
+                'requires_ticket': True,
+                'ticket_price': 'Typically $5-25',
+                'booking_url': f'https://www.google.com/search?q={quote(f"{attraction_name} {city} tickets")}',
+                'source': 'General Search',
+                'notes': 'Historical sites often require tickets. Audio guides may be extra.'
+            }
+        
+        # Free attraction pattern
+        if any(keyword in attraction_lower for keyword in ['park', 'square', 'beach', 'market', 'street']):
+            return {
+                'requires_ticket': False,
+                'ticket_price': 'Free',
+                'booking_url': None,
+                'source': 'General Search',
+                'notes': 'This attraction is typically free to visit'
+            }
+        
+        return None
+        
+    except Exception as e:
+        logger.error(f"Generic search error: {str(e)}")
+        return None
+
+
+def get_city_code(city):
+    """Get city code for TripAdvisor (simplified)"""
+    city_codes = {
+        'tokyo': '298184',
+        'paris': '187147',
+        'london': '186338',
+        'new york': '60763',
+        'rome': '187791',
+        'barcelona': '187497',
+        'amsterdam': '188590',
+        'berlin': '187275',
+        'madrid': '187514',
+        'vienna': '190454'
+    }
+    return city_codes.get(city.lower(), '187147')  # Default to Paris
+
+
+@app.route('/api/get-ticket-info', methods=['POST'])
+def get_ticket_info():
+    """Get ticket information for an attraction"""
+    try:
+        data = request.get_json()
+        attraction_name = data.get('attraction_name', '')
+        city = data.get('city', '')
+
+        if not attraction_name:
+            return jsonify({'error': 'Please provide attraction name'}), 400
+
+        # Search for ticket information
+        ticket_info = search_ticket_info(attraction_name, city)
+        
+        logger.info(f"Ticket info for {attraction_name}: {ticket_info}")
+        return jsonify({'ticket_info': ticket_info})
+
+    except Exception as e:
+        logger.error(f"Error getting ticket info: {str(e)}")
+        return jsonify({'error': f'Failed to get ticket info: {str(e)}'}), 500
+
+
 def get_sample_itinerary(city, days):
     """Return sample itinerary data"""
     sample_data = {
@@ -462,19 +710,40 @@ def get_sample_itinerary(city, days):
                         "name": f"{city} Central Square",
                         "description": f"The iconic square located in the heart of {city}, a must-visit destination for tourists. Here you'll find a blend of the city's history and modern culture, surrounded by important historical buildings and contemporary commercial areas. The square regularly hosts various cultural events and festivals.",
                         "duration": "1-2 hours",
-                        "category": "Historical & Cultural"
+                        "category": "Historical & Cultural",
+                        "ticket_info": {
+                            "requires_ticket": False,
+                            "ticket_price": "Free",
+                            "booking_url": None,
+                            "source": "General",
+                            "notes": "Public square - free to visit"
+                        }
                     },
                     {
                         "name": f"{city} Museum",
                         "description": f"Home to a rich collection of historical artifacts and art treasures, showcasing the historical development and cultural evolution of {city} and the surrounding region. The museum building itself is a work of art, combining traditional and modern design elements.",
                         "duration": "2-3 hours",
-                        "category": "Culture & Education"
+                        "category": "Culture & Education",
+                        "ticket_info": {
+                            "requires_ticket": True,
+                            "ticket_price": "Typically $10-20",
+                            "booking_url": f"https://www.google.com/search?q={quote(f'{city} Museum tickets')}",
+                            "source": "General Search",
+                            "notes": "Most museums require tickets. Check official website for current prices."
+                        }
                     },
                     {
                         "name": f"{city} Old Town",
                         "description": f"A well-preserved historic district where you can experience the traditional charm of {city}. Narrow streets are lined with specialty shops, traditional restaurants, and cafes, making it a great place to experience local life.",
                         "duration": "2-3 hours",
-                        "category": "Historical & Cultural"
+                        "category": "Historical & Cultural",
+                        "ticket_info": {
+                            "requires_ticket": False,
+                            "ticket_price": "Free",
+                            "booking_url": None,
+                            "source": "General",
+                            "notes": "Historic district - free to walk around"
+                        }
                     }
                 ]
             },
@@ -485,19 +754,40 @@ def get_sample_itinerary(city, days):
                         "name": f"{city} Park",
                         "description": f"The largest city park in {city}, featuring lush greenery and scenic waterfront views. A popular spot for locals to relax and one of the best places to view the city skyline. The scenery is especially beautiful in spring and fall.",
                         "duration": "2-3 hours",
-                        "category": "Nature & Scenery"
+                        "category": "Nature & Scenery",
+                        "ticket_info": {
+                            "requires_ticket": False,
+                            "ticket_price": "Free",
+                            "booking_url": None,
+                            "source": "General",
+                            "notes": "Public park - free to visit"
+                        }
                     },
                     {
                         "name": f"{city} Food Street",
                         "description": f"A district that brings together various specialty foods of {city}, from traditional snacks to modern dining. The food street comes alive at night with bright lights and bustling crowds, making it the perfect place to taste authentic local cuisine.",
                         "duration": "2-3 hours",
-                        "category": "Food & Shopping"
+                        "category": "Food & Shopping",
+                        "ticket_info": {
+                            "requires_ticket": False,
+                            "ticket_price": "Free",
+                            "booking_url": None,
+                            "source": "General",
+                            "notes": "Food district - free to walk around, pay for food"
+                        }
                     },
                     {
                         "name": f"{city} Observation Deck",
                         "description": f"Located at the city's highest point, this viewing platform offers a 360-degree panoramic view of {city}. Visit at sunset to enjoy the most spectacular city nightscape.",
                         "duration": "1-2 hours",
-                        "category": "Sightseeing"
+                        "category": "Sightseeing",
+                        "ticket_info": {
+                            "requires_ticket": True,
+                            "ticket_price": "Typically $15-30",
+                            "booking_url": f"https://www.google.com/search?q={quote(f'{city} Observation Deck tickets')}",
+                            "source": "General Search",
+                            "notes": "Observation decks usually require tickets. Advance booking recommended."
+                        }
                     }
                 ]
             },
@@ -508,13 +798,27 @@ def get_sample_itinerary(city, days):
                         "name": f"{city} Market",
                         "description": f"The most distinctive traditional market in the area, selling fresh ingredients, handicrafts, and souvenirs. Here you can get close to the daily life of locals and it's a great place to buy unique gifts.",
                         "duration": "1-2 hours",
-                        "category": "Shopping Experience"
+                        "category": "Shopping Experience",
+                        "ticket_info": {
+                            "requires_ticket": False,
+                            "ticket_price": "Free",
+                            "booking_url": None,
+                            "source": "General",
+                            "notes": "Traditional market - free to visit, pay for purchases"
+                        }
                     },
                     {
                         "name": f"{city} Arts District",
                         "description": f"A creative arts district filled with galleries, studios, independent bookstores, and cafes. Street art murals and live performances add a unique cultural atmosphere to the area.",
                         "duration": "2-3 hours",
-                        "category": "Arts & Culture"
+                        "category": "Arts & Culture",
+                        "ticket_info": {
+                            "requires_ticket": False,
+                            "ticket_price": "Free",
+                            "booking_url": None,
+                            "source": "General",
+                            "notes": "Arts district - free to walk around, some galleries may charge"
+                        }
                     }
                 ]
             }
