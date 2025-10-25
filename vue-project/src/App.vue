@@ -1,47 +1,229 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+  <div id="app">
+    <header class="app-header">
+      <h1>✈️ TripTeller - AI 语音导游</h1>
+      <p class="subtitle">智能旅行推荐 · 语音讲解 · 路线规划</p>
+    </header>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
+    <main class="app-main">
+      <CityInput @search="handleCitySearch" :loading="loading" />
+      
+      <div v-if="error" class="error-message">
+        {{ error }}
+      </div>
 
-  <main>
-    <TheWelcome />
-  </main>
+      <div v-if="itinerary" class="content-grid">
+        <div class="left-panel">
+          <ItineraryDisplay :itinerary="itinerary" @play-audio="handlePlayAudio" />
+        </div>
+        
+        <div class="right-panel">
+          <MapView :places="itinerary.places" :city="currentCity" />
+        </div>
+      </div>
+
+      <AudioPlayer 
+        v-if="currentAudio" 
+        :audio-url="currentAudio.url" 
+        :title="currentAudio.title" 
+        @close="currentAudio = null"
+      />
+
+      <div v-if="posterImage" class="poster-section">
+        <h3>🎨 目的地海报</h3>
+        <img :src="posterImage" alt="Destination Poster" class="poster-image" />
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <p>Powered by Gemini AI · Google Maps · ElevenLabs</p>
+    </footer>
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
+<script setup>
+import { ref } from 'vue'
+import CityInput from './components/CityInput.vue'
+import ItineraryDisplay from './components/ItineraryDisplay.vue'
+import MapView from './components/MapView.vue'
+import AudioPlayer from './components/AudioPlayer.vue'
+
+const loading = ref(false)
+const error = ref(null)
+const currentCity = ref('')
+const itinerary = ref(null)
+const currentAudio = ref(null)
+const posterImage = ref(null)
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
+const handleCitySearch = async (city) => {
+  loading.value = true
+  error.value = null
+  currentCity.value = city
+  itinerary.value = null
+  posterImage.value = null
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/generate-itinerary`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ city, days: 3 })
+    })
+
+    if (!response.ok) {
+      throw new Error('生成行程失败')
+    }
+
+    const data = await response.json()
+    itinerary.value = data.itinerary
+
+    // 可选：生成海报
+    if (data.poster_url) {
+      posterImage.value = data.poster_url
+    }
+  } catch (err) {
+    error.value = err.message || '发生错误，请重试'
+    console.error('Error:', err)
+  } finally {
+    loading.value = false
+  }
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+const handlePlayAudio = async (place) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/generate-audio`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        place_name: place.name,
+        description: place.description 
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('生成语音失败')
+    }
+
+    const data = await response.json()
+    currentAudio.value = {
+      url: data.audio_url,
+      title: place.name
+    }
+  } catch (err) {
+    error.value = err.message || '语音生成失败'
+    console.error('Audio error:', err)
+  }
+}
+</script>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.app-header h1 {
+  font-size: 2.5rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.app-main {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  border-left: 4px solid #c33;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.left-panel, .right-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.poster-section {
+  margin-top: 2rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.poster-section h3 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.poster-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.app-footer {
+  background: rgba(0, 0, 0, 0.2);
+  color: white;
+  text-align: center;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+@media (max-width: 968px) {
+  .content-grid {
+    grid-template-columns: 1fr;
   }
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
+  .app-header h1 {
+    font-size: 1.8rem;
   }
 }
 </style>
