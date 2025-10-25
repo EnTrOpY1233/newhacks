@@ -67,25 +67,38 @@ newhacks/
 GET /api/health
 ```
 
-### 2. 生成行程
+### 2. 搜索地点（新增）⭐
 ```
-POST /api/generate-itinerary
-Body: { "city": "Tokyo", "days": 3 }
+POST /api/search-places
+Body: { "query": "Paris" }
+Response: { "places": [{ "city": "Paris", "state": "...", "country": "France", ... }] }
 ```
 
-### 3. 生成语音
+### 3. 生成行程
+```
+POST /api/generate-itinerary
+Body: { 
+  "city": "Tokyo", 
+  "days": 3,
+  "intensity": "moderate",
+  "preferences": ["food", "culture"],
+  "location_context": { "state": "...", "country": "Japan", ... }
+}
+```
+
+### 4. 生成语音
 ```
 POST /api/generate-audio
 Body: { "place_name": "...", "description": "..." }
 ```
 
-### 4. 生成海报
+### 5. 生成海报
 ```
 POST /api/generate-poster
 Body: { "city": "Paris" }
 ```
 
-### 5. 获取音频
+### 6. 获取音频
 ```
 GET /api/audio/<filename>
 ```

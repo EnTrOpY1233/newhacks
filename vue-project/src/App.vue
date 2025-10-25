@@ -6,10 +6,24 @@
     </header>
 
     <main class="app-main">
-      <CityInput @search="handleCitySearch" :loading="loading" @options-change="handleOptionsChange" />
+      <CityInput 
+        @confirm-place="handlePlaceConfirmed" 
+        :loading="loading" 
+        @options-change="handleOptionsChange" 
+      />
       
       <div v-if="error" class="error-message">
         {{ error }}
+      </div>
+
+      <!-- Show confirmed location info -->
+      <div v-if="confirmedPlace" class="location-confirmed">
+        <p class="confirmed-text">
+          <span class="check-icon">✓</span>
+          Location confirmed: <strong>{{ confirmedPlace.city }}</strong>
+          <span v-if="confirmedPlace.state">, {{ confirmedPlace.state }}</span>
+          <span>, {{ confirmedPlace.country }}</span>
+        </p>
       </div>
 
       <div v-if="itinerary" class="content-grid">
@@ -55,6 +69,7 @@ import TravelTips from './components/TravelTips.vue'
 const loading = ref(false)
 const error = ref(null)
 const currentCity = ref('')
+const confirmedPlace = ref(null)
 const itinerary = ref(null)
 const currentAudio = ref(null)
 const posterImage = ref(null)
@@ -71,10 +86,30 @@ const handleOptionsChange = (options) => {
   console.log('Travel options updated:', options)
 }
 
-const handleCitySearch = async (city) => {
+/**
+ * Handle place confirmation from CityInput component
+ * This is called after the user selects a specific location from the search results
+ * @param {Object} place - The confirmed place object with city, state, country, location data
+ */
+const handlePlaceConfirmed = async (place) => {
+  console.log('Place confirmed:', place)
+  confirmedPlace.value = place
+  
+  // Generate itinerary for the confirmed place
+  await generateItinerary(place)
+}
+
+/**
+ * Generate itinerary for the confirmed place
+ * @param {Object} place - The place object containing location details
+ */
+const generateItinerary = async (place) => {
   loading.value = true
   error.value = null
-  currentCity.value = city
+  
+  // Use city name from confirmed place, or fall back to formatted address
+  const cityName = place.city || place.formatted_address
+  currentCity.value = cityName
   itinerary.value = null
   posterImage.value = null
 
@@ -85,10 +120,18 @@ const handleCitySearch = async (city) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ 
-        city, 
+        city: cityName,
         days: travelOptions.value.days,
         intensity: travelOptions.value.intensity,
-        preferences: travelOptions.value.preferences
+        preferences: travelOptions.value.preferences,
+        // Include additional location context for better AI results
+        location_context: {
+          state: place.state,
+          country: place.country,
+          country_code: place.country_code,
+          formatted_address: place.formatted_address,
+          coordinates: place.location
+        }
       })
     })
 
@@ -207,6 +250,35 @@ body {
   border-radius: 8px;
   margin: 1rem 0;
   border: 1px solid #FECACA;
+}
+
+.location-confirmed {
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  margin: 1rem 0;
+}
+
+.confirmed-text {
+  color: #065F46;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.check-icon {
+  background: #10B981;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
 }
 
 .content-grid {

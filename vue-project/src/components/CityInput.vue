@@ -16,7 +16,7 @@
           @keyup.enter="handleSearch"
           @focus="showPlacePicker = true"
           @input="onInputChange"
-          :disabled="loading"
+          :disabled="loading || searching"
           class="city-input"
         />
         
@@ -32,12 +32,79 @@
       
       <button 
         @click="handleSearch" 
-        :disabled="loading || !cityName.trim()"
+        :disabled="loading || searching || !cityName.trim()"
         class="search-button"
       >
-        <span v-if="!loading">Search</span>
+        <span v-if="!loading && !searching">Search</span>
+        <span v-else-if="searching">Searching...</span>
         <span v-else>Generating...</span>
       </button>
+    </div>
+
+    <!-- Place Confirmation Modal -->
+    <div v-if="showConfirmModal" class="modal-overlay" @click="closeModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>Confirm Location</h3>
+          <button @click="closeModal" class="close-btn">&times;</button>
+        </div>
+        
+        <div v-if="searchError" class="error-box">
+          <div class="error-icon">⚠️</div>
+          <div class="error-content">
+            <h4>Location Not Found</h4>
+            <p>{{ searchError }}</p>
+            <div class="error-suggestions">
+              <p><strong>Suggestions:</strong></p>
+              <ul>
+                <li>Check the spelling of the city name</li>
+                <li>Try using the full city name (e.g., "New York" instead of "NY")</li>
+                <li>Include the country name if there are multiple cities with the same name</li>
+                <li>Try popular cities from the list below</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="foundPlaces.length === 0" class="no-results">
+          <div class="no-results-icon">🔍</div>
+          <h4>No locations found</h4>
+          <p>We couldn't find any places matching "{{ searchQuery }}"</p>
+          <p class="hint">Please try a different search term or check the spelling</p>
+        </div>
+
+        <div v-else class="places-list">
+          <p class="instruction">
+            We found {{ foundPlaces.length }} location{{ foundPlaces.length > 1 ? 's' : '' }} matching "{{ searchQuery }}". 
+            Please select the correct one:
+          </p>
+          
+          <div 
+            v-for="(place, index) in foundPlaces" 
+            :key="place.place_id"
+            @click="confirmPlace(place)"
+            class="place-item"
+          >
+            <div class="place-main">
+              <div class="place-name">
+                {{ place.city || 'Unknown City' }}
+              </div>
+              <div class="place-details">
+                <span v-if="place.state" class="detail-item">{{ place.state }}</span>
+                <span class="detail-item">{{ place.country }}</span>
+                <span class="detail-item country-code">{{ place.country_code }}</span>
+              </div>
+            </div>
+            <div class="place-address">
+              {{ place.formatted_address }}
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button @click="closeModal" class="btn-cancel">Cancel</button>
+        </div>
+      </div>
     </div>
 
     <!-- Popular Cities - moved closer to search -->
@@ -116,13 +183,20 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['search', 'options-change'])
+const emit = defineEmits(['search', 'confirm-place', 'options-change'])
 
 const placePicker = ref(null)
 const cityName = ref('')
 const showPlacePicker = ref(false)
 const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
-const popularCities = ['Tokyo', 'Paris', 'Toronto', 'New York', 'London', 'Barcelona', 'Dubai', 'Singapore']
+const popularCities = ['Tokyo', 'Paris', 'Toronto', 'New York', 'London', 'Barcelona', 'Dubai', 'Shanghai']
+
+// Place confirmation states
+const searching = ref(false)
+const showConfirmModal = ref(false)
+const foundPlaces = ref([])
+const searchQuery = ref('')
+const searchError = ref(null)
 
 // Travel options
 const selectedDays = ref(3)
@@ -209,11 +283,79 @@ const handlePlaceChange = (event) => {
   }
 }
 
-const handleSearch = () => {
-  if (cityName.value.trim()) {
-    showPlacePicker.value = false
-    emit('search', cityName.value.trim())
+/**
+ * Handle search button click
+ * First validates the place exists before proceeding with itinerary generation
+ */
+const handleSearch = async () => {
+  if (!cityName.value.trim()) return
+  
+  showPlacePicker.value = false
+  searching.value = true
+  searchError.value = null
+  searchQuery.value = cityName.value.trim()
+
+  try {
+    // Call backend API to search for places
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+    const response = await fetch(`${API_BASE_URL}/api/search-places`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query: searchQuery.value })
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to search for places')
+    }
+
+    const data = await response.json()
+    foundPlaces.value = data.places || []
+
+    // If no places found, show error and don't proceed
+    if (foundPlaces.value.length === 0) {
+      searchError.value = `No locations found for "${searchQuery.value}". Please try a different city name.`
+      showConfirmModal.value = true
+      return
+    }
+
+    // If exactly one place found, auto-confirm it
+    if (foundPlaces.value.length === 1) {
+      confirmPlace(foundPlaces.value[0])
+    } else {
+      // Show modal for user to select from multiple places
+      showConfirmModal.value = true
+    }
+  } catch (error) {
+    console.error('Error searching places:', error)
+    searchError.value = 'Failed to search for location. Please check your internet connection and try again.'
+    showConfirmModal.value = true
+  } finally {
+    searching.value = false
   }
+}
+
+/**
+ * Confirm the selected place and proceed with itinerary generation
+ * @param {Object} place - The selected place object with city, state, country info
+ */
+const confirmPlace = (place) => {
+  showConfirmModal.value = false
+  
+  // Update the city name input with the confirmed place
+  cityName.value = place.city || place.formatted_address
+  
+  // Emit the confirmed place to parent component
+  emit('confirm-place', place)
+}
+
+/**
+ * Close the confirmation modal
+ */
+const closeModal = () => {
+  showConfirmModal.value = false
+  searchError.value = null
 }
 
 const selectCity = (city) => {
@@ -437,6 +579,237 @@ onMounted(() => {
   min-width: 140px;
 }
 
+/* Place Confirmation Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #E5E5E5;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #202123;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #6B7280;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: #F3F4F6;
+  color: #202123;
+}
+
+.error-box {
+  padding: 1.5rem 2rem;
+  background: #FEF2F2;
+  color: #DC2626;
+  border-left: 4px solid #DC2626;
+  margin: 1.5rem 2rem;
+  border-radius: 8px;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.error-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+.error-content h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.error-content p {
+  margin: 0 0 1rem 0;
+  line-height: 1.5;
+}
+
+.error-suggestions {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+}
+
+.error-suggestions p {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.error-suggestions ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.error-suggestions li {
+  margin-bottom: 0.3rem;
+}
+
+.no-results {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: #6B7280;
+}
+
+.no-results-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+.no-results h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #4B5563;
+}
+
+.no-results p {
+  margin: 0.5rem 0;
+}
+
+.no-results .hint {
+  font-size: 0.9rem;
+  color: #9CA3AF;
+}
+
+.places-list {
+  padding: 1.5rem 2rem;
+}
+
+.instruction {
+  margin: 0 0 1.5rem 0;
+  color: #4B5563;
+  font-size: 0.95rem;
+}
+
+.place-item {
+  padding: 1.25rem;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.place-item:hover {
+  border-color: #10A37F;
+  background: #F0FDF9;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(16, 163, 127, 0.1);
+}
+
+.place-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.place-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #202123;
+  margin-bottom: 0.25rem;
+}
+
+.place-details {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.detail-item {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.6rem;
+  background: #F3F4F6;
+  color: #4B5563;
+  border-radius: 4px;
+}
+
+.country-code {
+  background: #10A37F;
+  color: white;
+  font-weight: 600;
+}
+
+.place-address {
+  font-size: 0.9rem;
+  color: #6B7280;
+  margin-top: 0.5rem;
+}
+
+.modal-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #E5E5E5;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-cancel {
+  padding: 0.75rem 1.5rem;
+  background: #F3F4F6;
+  color: #202123;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #E5E7EB;
+}
+
 @media (max-width: 968px) {
   .options-grid {
     grid-template-columns: 1fr;
@@ -455,6 +828,18 @@ onMounted(() => {
   
   .options-grid {
     grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    max-width: 95vw;
+  }
+
+  .place-main {
+    flex-direction: column;
+  }
+
+  .place-details {
+    margin-top: 0.5rem;
   }
 }
 </style>

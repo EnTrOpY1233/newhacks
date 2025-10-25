@@ -83,6 +83,90 @@ def health_check():
     })
 
 
+@app.route('/api/search-places', methods=['POST'])
+def search_places():
+    """
+    Search for places using Google Geocoding API.
+    Returns a list of matching places with their details (country, state, formatted address).
+    Handles duplicate city names by returning all matches.
+    """
+    data = request.get_json()
+    query = data.get('query', '')
+    
+    if not query:
+        return jsonify({'error': 'Query parameter is required'}), 400
+    
+    if not GOOGLE_MAPS_API_KEY:
+        logger.warning("Google Maps API key not configured")
+        return jsonify({'error': 'Google Maps API not configured'}), 500
+    
+    try:
+        # Use Google Geocoding API to search for the place
+        geocode_url = 'https://maps.googleapis.com/maps/api/geocode/json'
+        params = {
+            'address': query,
+            'key': GOOGLE_MAPS_API_KEY
+        }
+        
+        logger.info(f"🔍 Searching for place: {query}")
+        response = requests.get(geocode_url, params=params)
+        response.raise_for_status()
+        
+        geocode_data = response.json()
+        
+        if geocode_data['status'] == 'ZERO_RESULTS':
+            return jsonify({'places': []}), 200
+        
+        if geocode_data['status'] != 'OK':
+            logger.error(f"Geocoding API error: {geocode_data['status']}")
+            return jsonify({'error': f"Geocoding failed: {geocode_data['status']}"}), 500
+        
+        # Parse results to extract relevant place information
+        places = []
+        for result in geocode_data['results']:
+            place_info = {
+                'formatted_address': result['formatted_address'],
+                'place_id': result['place_id'],
+                'location': result['geometry']['location'],
+                'city': None,
+                'state': None,
+                'country': None,
+                'country_code': None
+            }
+            
+            # Extract city, state, and country from address components
+            for component in result['address_components']:
+                types = component['types']
+                
+                if 'locality' in types:
+                    place_info['city'] = component['long_name']
+                elif 'administrative_area_level_1' in types:
+                    place_info['state'] = component['long_name']
+                elif 'country' in types:
+                    place_info['country'] = component['long_name']
+                    place_info['country_code'] = component['short_name']
+            
+            # If no city found, try to use other locality types
+            if not place_info['city']:
+                for component in result['address_components']:
+                    types = component['types']
+                    if 'administrative_area_level_2' in types or 'sublocality' in types:
+                        place_info['city'] = component['long_name']
+                        break
+            
+            places.append(place_info)
+        
+        logger.info(f"✅ Found {len(places)} place(s)")
+        return jsonify({'places': places}), 200
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"❌ Error calling Geocoding API: {str(e)}")
+        return jsonify({'error': 'Failed to search for places'}), 500
+    except Exception as e:
+        logger.error(f"❌ Unexpected error: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
 def call_cerebras_api(prompt):
     """Call Cerebras API"""
     if not cerebras_client:
@@ -144,16 +228,33 @@ def call_openrouter_api(prompt):
 
 @app.route('/api/generate-itinerary', methods=['POST'])
 def generate_itinerary():
-    """Generate travel itinerary"""
+    """
+    Generate travel itinerary for a confirmed location
+    Accepts location_context with detailed place information (state, country, coordinates)
+    """
     try:
         data = request.get_json()
         city = data.get('city', '')
         days = data.get('days', 3)
         intensity = data.get('intensity', 'moderate')
         preferences = data.get('preferences', [])
+        location_context = data.get('location_context', {})
 
         if not city:
             return jsonify({'error': 'Please provide city name'}), 400
+        
+        # Extract additional location details if provided
+        state = location_context.get('state', '')
+        country = location_context.get('country', '')
+        
+        # Build full location name for better context
+        full_location = city
+        if state and country:
+            full_location = f"{city}, {state}, {country}"
+        elif country:
+            full_location = f"{city}, {country}"
+        
+        logger.info(f"Generating itinerary for: {full_location}")
 
         if not AI_SERVICE:
             # Return sample data for testing
@@ -177,9 +278,9 @@ def generate_itinerary():
             pref_names = ', '.join(preferences)
             preference_desc = f"\nUser Preferences: Focus on {pref_names} attractions and experiences. Prioritize these categories when selecting destinations."
 
-        # Build prompt
+        # Build prompt with full location context
         prompt = f"""
-Create a {days}-day travel itinerary for {city} with a {intensity} travel pace.
+Create a {days}-day travel itinerary for {full_location} with a {intensity} travel pace.
 
 Travel Intensity: {intensity_desc}{preference_desc}
 
@@ -189,6 +290,7 @@ Requirements:
 3. {'IMPORTANT: Prioritize ' + ', '.join(preferences) + ' attractions based on user preferences' if preferences else 'Include a diverse mix of attractions'}
 4. Provide practical travel tips specific to the {intensity} pace
 5. Consider travel time between attractions for {intensity} travelers
+6. Focus on attractions specifically in {full_location} to avoid confusion with similarly named cities
 
 Return in JSON format with the following structure:
 {{
