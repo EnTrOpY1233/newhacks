@@ -22,26 +22,19 @@
         
         <div class="place-details">
           <span v-if="place.duration" class="detail-item">
-            ⏱️ {{ place.duration }}
+            {{ place.duration }}
           </span>
           <span v-if="place.category" class="detail-item category">
-            🏷️ {{ place.category }}
+            {{ place.category }}
           </span>
         </div>
       </div>
-    </div>
-
-    <div v-if="itinerary.tips" class="tips-section">
-      <h3>Travel Tips</h3>
-      <ul>
-        <li v-for="(tip, index) in itinerary.tips" :key="index">{{ tip }}</li>
-      </ul>
     </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   itinerary: {
     type: Object,
     required: true
@@ -153,44 +146,6 @@ defineEmits(['play-audio'])
   background: #FEF3C7;
   color: #92400E;
   border-color: #FDE68A;
-}
-
-.tips-section {
-  margin-top: 2.5rem;
-  padding: 2rem;
-  background: #F0FDF4;
-  border-radius: 8px;
-  border: 1px solid #D1FAE5;
-}
-
-.tips-section h3 {
-  color: #065F46;
-  margin-bottom: 1.2rem;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.tips-section ul {
-  list-style: none;
-  padding: 0;
-}
-
-.tips-section li {
-  padding: 0.6rem 0;
-  padding-left: 2rem;
-  position: relative;
-  color: #374151;
-  font-size: 1rem;
-  line-height: 1.6;
-}
-
-.tips-section li::before {
-  content: "✓";
-  position: absolute;
-  left: 0;
-  color: #10A37F;
-  font-weight: bold;
-  font-size: 1.1rem;
 }
 </style>
 

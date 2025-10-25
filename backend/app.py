@@ -101,7 +101,7 @@ def call_cerebras_api(prompt):
                     "content": prompt
                 }
             ],
-            model="llama3.1-70b",  # Fast and capable model
+            model="llama3.1-8b",  # Available Cerebras model
             temperature=0.7,
             top_p=0.8,
             max_completion_tokens=4000

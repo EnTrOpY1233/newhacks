@@ -136,13 +136,22 @@ const addMarkers = async () => {
           animation: window.google.maps.Animation.DROP
         })
 
+        // Create compact description (first 120 characters)
+        const shortDesc = place.description 
+          ? (place.description.length > 120 
+              ? place.description.substring(0, 120) + '...' 
+              : place.description)
+          : '';
+
         const infoWindow = new window.google.maps.InfoWindow({
           content: `
-            <div style="padding: 16px; max-width: 340px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-              <h3 style="margin: 0 0 12px 0; color: #202123; font-size: 17px; font-weight: 600;">${place.name}</h3>
-              <p style="margin: 0; color: #565869; font-size: 14px; line-height: 1.7;">${place.description || ''}</p>
+            <div style="padding: 8px 12px; max-width: 280px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+              <h3 style="margin: 0 0 6px 0; color: #202123; font-size: 16px; font-weight: 600; line-height: 1.3;">${place.name}</h3>
+              <p style="margin: 0; color: #565869; font-size: 14px; line-height: 1.5;">${shortDesc}</p>
+              ${place.duration ? `<p style="margin: 6px 0 0 0; color: #6E6E80; font-size: 12px;">Duration: ${place.duration}</p>` : ''}
             </div>
-          `
+          `,
+          maxWidth: 280
         })
 
         marker.addListener('click', () => {

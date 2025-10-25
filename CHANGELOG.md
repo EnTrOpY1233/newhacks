@@ -85,3 +85,7 @@ Backend now customizes itineraries based on:
 - AI generates appropriate content for each intensity level
 - Cleaner, more accessible design
 
+
+
+
+

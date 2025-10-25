@@ -33,20 +33,24 @@
         <h3>Destination Poster</h3>
         <img :src="posterImage" alt="Destination Poster" class="poster-image" />
       </div>
+
+      <!-- Travel Tips at bottom -->
+      <TravelTips v-if="itinerary && itinerary.tips" :tips="itinerary.tips" />
     </main>
 
     <footer class="app-footer">
-      <p>Powered by Gemini AI · Google Maps · ElevenLabs</p>
+      <p>Powered by Cerebras AI · Google Maps · ElevenLabs</p>
     </footer>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import CityInput from './components/CityInput.vue'
 import ItineraryDisplay from './components/ItineraryDisplay.vue'
 import MapView from './components/MapView.vue'
 import AudioPlayer from './components/AudioPlayer.vue'
+import TravelTips from './components/TravelTips.vue'
 
 const loading = ref(false)
 const error = ref(null)
