@@ -50,27 +50,12 @@
         </div>
         
         <div v-if="searchError" class="error-box">
-          <div class="error-icon">⚠️</div>
-          <div class="error-content">
-            <h4>Location Not Found</h4>
-            <p>{{ searchError }}</p>
-            <div class="error-suggestions">
-              <p><strong>Suggestions:</strong></p>
-              <ul>
-                <li>Check the spelling of the city name</li>
-                <li>Try using the full city name (e.g., "New York" instead of "NY")</li>
-                <li>Include the country name if there are multiple cities with the same name</li>
-                <li>Try popular cities from the list below</li>
-              </ul>
-            </div>
-          </div>
+          {{ searchError }}
         </div>
 
         <div v-else-if="foundPlaces.length === 0" class="no-results">
-          <div class="no-results-icon">🔍</div>
-          <h4>No locations found</h4>
-          <p>We couldn't find any places matching "{{ searchQuery }}"</p>
-          <p class="hint">Please try a different search term or check the spelling</p>
+          <p>No locations found for "{{ searchQuery }}"</p>
+          <p class="hint">Please try a different search term</p>
         </div>
 
         <div v-else class="places-list">
@@ -313,23 +298,16 @@ const handleSearch = async () => {
     const data = await response.json()
     foundPlaces.value = data.places || []
 
-    // If no places found, show error and don't proceed
-    if (foundPlaces.value.length === 0) {
-      searchError.value = `No locations found for "${searchQuery.value}". Please try a different city name.`
-      showConfirmModal.value = true
-      return
-    }
-
     // If exactly one place found, auto-confirm it
     if (foundPlaces.value.length === 1) {
       confirmPlace(foundPlaces.value[0])
     } else {
-      // Show modal for user to select from multiple places
+      // Show modal for user to select from multiple places or handle no results
       showConfirmModal.value = true
     }
   } catch (error) {
     console.error('Error searching places:', error)
-    searchError.value = 'Failed to search for location. Please check your internet connection and try again.'
+    searchError.value = 'Failed to search for location. Please try again.'
     showConfirmModal.value = true
   } finally {
     searching.value = false
@@ -642,73 +620,17 @@ onMounted(() => {
 
 .error-box {
   padding: 1.5rem 2rem;
-  background: #FEF2F2;
+  background: #FEE2E2;
   color: #DC2626;
   border-left: 4px solid #DC2626;
   margin: 1.5rem 2rem;
-  border-radius: 8px;
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.error-icon {
-  font-size: 1.5rem;
-  flex-shrink: 0;
-  margin-top: 0.2rem;
-}
-
-.error-content h4 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.error-content p {
-  margin: 0 0 1rem 0;
-  line-height: 1.5;
-}
-
-.error-suggestions {
-  background: rgba(255, 255, 255, 0.7);
-  padding: 1rem;
-  border-radius: 6px;
-  margin-top: 0.5rem;
-}
-
-.error-suggestions p {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.9rem;
-}
-
-.error-suggestions ul {
-  margin: 0;
-  padding-left: 1.2rem;
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
-
-.error-suggestions li {
-  margin-bottom: 0.3rem;
+  border-radius: 4px;
 }
 
 .no-results {
   padding: 3rem 2rem;
   text-align: center;
   color: #6B7280;
-}
-
-.no-results-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  opacity: 0.6;
-}
-
-.no-results h4 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #4B5563;
 }
 
 .no-results p {
