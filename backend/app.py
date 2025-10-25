@@ -18,21 +18,36 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS
 
 # Configure API keys
+CEREBRAS_API_KEY = os.getenv('CEREBRAS_API_KEY')
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 
-# Check which AI service to use
-if OPENROUTER_API_KEY:
+# Check which AI service to use (priority order)
+if CEREBRAS_API_KEY:
+    logger.info("Using Cerebras API")
+    AI_SERVICE = 'cerebras'
+    try:
+        from cerebras.cloud.sdk import Cerebras
+        cerebras_client = Cerebras(api_key=CEREBRAS_API_KEY)
+    except ImportError:
+        logger.warning(
+            "Cerebras SDK not installed, falling back to next option")
+        AI_SERVICE = None
+elif OPENROUTER_API_KEY:
     logger.info("Using OpenRouter API")
     AI_SERVICE = 'openrouter'
 elif GEMINI_API_KEY:
     logger.info("Using Gemini API")
     AI_SERVICE = 'gemini'
-    import google.generativeai as genai
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-pro')
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-pro')
+    except ImportError:
+        logger.warning("Gemini SDK not installed")
+        AI_SERVICE = None
 else:
     logger.warning("No AI API key found, will use sample data")
     AI_SERVICE = None
@@ -48,11 +63,37 @@ def health_check():
     return jsonify({
         'status': 'ok',
         'ai_service': AI_SERVICE or 'sample_data',
+        'cerebras_configured': bool(CEREBRAS_API_KEY),
         'openrouter_configured': bool(OPENROUTER_API_KEY),
         'gemini_configured': bool(GEMINI_API_KEY),
         'elevenlabs_configured': bool(ELEVENLABS_API_KEY),
         'maps_configured': bool(GOOGLE_MAPS_API_KEY)
     })
+
+
+def call_cerebras_api(prompt):
+    """Call Cerebras API"""
+    try:
+        completion = cerebras_client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful travel planning assistant. Always respond with valid JSON when asked."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            model="llama3.1-70b",  # Fast and capable model
+            temperature=0.7,
+            top_p=0.8,
+            max_completion_tokens=4000
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        logger.error(f"Cerebras API error: {str(e)}")
+        raise
 
 
 def call_openrouter_api(prompt):
@@ -132,7 +173,9 @@ Return only JSON, no additional text.
 """
 
         # Call appropriate AI service
-        if AI_SERVICE == 'openrouter':
+        if AI_SERVICE == 'cerebras':
+            response_text = call_cerebras_api(prompt)
+        elif AI_SERVICE == 'openrouter':
             response_text = call_openrouter_api(prompt)
         elif AI_SERVICE == 'gemini':
             response = model.generate_content(prompt)
