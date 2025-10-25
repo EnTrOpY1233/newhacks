@@ -1,0 +1,9 @@
+version: "2"
+authtoken: 34Yssff1NCcB6R2IhiGcs7hQX9Q_4H1Wgs2g6Dmp4fC4ZdweQ
+
+tunnels:
+  frontend:
+    addr: 5173
+    proto: http
+    domain: tonisha-chiropodical-sharonda.ngrok-free.dev
+
