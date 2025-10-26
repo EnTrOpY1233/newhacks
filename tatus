@@ -1,0 +1,65 @@
+[1mdiff --cc vue-project/src/components/CityInput.vue[m
+[1mindex 70f6c6f,f030f88..0000000[m
+[1m--- a/vue-project/src/components/CityInput.vue[m
+[1m+++ b/vue-project/src/components/CityInput.vue[m
+[36m@@@ -530,48 -529,24 +530,59 @@@[m [monMounted(() => [m
+  }[m
+  [m
+  .input-wrapper {[m
+[32m++<<<<<<< HEAD[m
+[32m +  display: grid;[m
+[32m +  grid-template-columns: 2fr 1fr 1fr;[m
+[32m++=======[m
+[32m+   display: flex;[m
+[32m++>>>>>>> fa01200 (changed icon)[m
+    gap: 1rem;[m
+    margin-bottom: 2rem;[m
+[31m-   align-items: stretch;[m
+[32m+   align-items: center;[m
+  }[m
+  [m
+[32m +.options-row {[m
+[32m +  display: flex;[m
+[32m +  flex-direction: column;[m
+[32m +  gap: 1rem;[m
+[32m +}[m
+[32m +[m
+  .speech-input-wrapper {[m
+    display: flex;[m
+    align-items: center;[m
+[32m+   flex-shrink: 0;[m
+[32m+ }[m
+[32m+ [m
+[32m+ .date-picker-wrapper {[m
+[32m+   display: flex;[m
+[32m+   align-items: center;[m
+[32m+   flex-shrink: 0;[m
+  }[m
+  [m
+[32m +.date-picker-wrapper {[m
+[32m +  display: flex;[m
+[32m +  align-items: center;[m
+[32m +}[m
+[32m +[m
+[32m +/* Mobile responsive */[m
+[32m +@media (max-width: 1024px) {[m
+[32m +  .input-wrapper {[m
+[32m +    grid-template-columns: 1fr;[m
+[32m +  }[m
+[32m +  [m
+[32m +  .options-row {[m
+[32m +    display: grid;[m
+[32m +    grid-template-columns: 1fr 1fr;[m
+[32m +    gap: 1rem;[m
+[32m +  }[m
+[32m +}[m
+[32m +[m
+[32m +@media (max-width: 768px) {[m
+[32m +  .options-row {[m
+[32m +    grid-template-columns: 1fr;[m
+[32m +  }[m
+[32m +}[m
+[32m +[m
+  .input-group {[m
+    flex: 1;[m
+    position: relative;[m
