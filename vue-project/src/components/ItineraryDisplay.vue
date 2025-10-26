@@ -3,10 +3,23 @@
     <h2>{{ itinerary.city }} Travel Itinerary</h2>
     <p class="duration">{{ itinerary.days }} Day Trip</p>
 
-    <div v-for="(day, index) in itinerary.schedule" :key="index" class="day-section">
-      <h3 class="day-title">Day {{ index + 1 }}</h3>
+    <!-- Day Tabs Navigation -->
+    <div class="day-tabs">
+      <button 
+        v-for="(day, index) in itinerary.schedule" 
+        :key="index"
+        @click="selectDay(index)"
+        :class="['day-tab', { active: selectedDay === index }]"
+      >
+        Day {{ index + 1 }}
+      </button>
+    </div>
+
+    <!-- Selected Day Content -->
+    <div v-if="currentDaySchedule" class="day-content">
+      <h3 class="day-title">Day {{ selectedDay + 1 }}</h3>
       
-      <div v-for="(place, placeIndex) in day.places" :key="placeIndex" class="place-card">
+      <div v-for="(place, placeIndex) in currentDaySchedule.places" :key="placeIndex" class="place-card">
         <div class="place-header">
           <h4 class="place-name">{{ place.name }}</h4>
           <button 
@@ -61,6 +74,8 @@
 </template>
 
 <script setup>
+import { ref, computed } from 'vue'
+
 const props = defineProps({
   itinerary: {
     type: Object,
@@ -69,6 +84,27 @@ const props = defineProps({
 })
 
 defineEmits(['play-audio'])
+
+// Tab state
+const selectedDay = ref(0)
+
+/**
+ * Select a specific day tab
+ * @param {Number} index - Day index (0-based)
+ */
+const selectDay = (index) => {
+  selectedDay.value = index
+}
+
+/**
+ * Get current day's schedule
+ */
+const currentDaySchedule = computed(() => {
+  if (!props.itinerary.schedule || props.itinerary.schedule.length === 0) {
+    return null
+  }
+  return props.itinerary.schedule[selectedDay.value]
+})
 </script>
 
 <style scoped>
@@ -86,12 +122,67 @@ defineEmits(['play-audio'])
 
 .duration {
   color: #6E6E80;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   font-size: 1.15rem;
 }
 
-.day-section {
-  margin-bottom: 2.5rem;
+/* Day Tabs Navigation */
+.day-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #E5E7EB;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+
+.day-tabs::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+.day-tab {
+  flex: 1;
+  min-width: 80px;
+  padding: 1rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #6B7280;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(16, 163, 127, 0.2);
+}
+
+.day-tab:hover {
+  color: #10A37F;
+  background: rgba(16, 163, 127, 0.05);
+}
+
+.day-tab.active {
+  color: #10A37F;
+  border-bottom-color: #10A37F;
+  background: rgba(16, 163, 127, 0.08);
+}
+
+/* Day Content */
+.day-content {
+  animation: fadeInTab 0.3s ease-out;
+}
+
+@keyframes fadeInTab {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .day-title {
@@ -103,6 +194,29 @@ defineEmits(['play-audio'])
   border-bottom: 1px solid #E5E5E5;
 }
 
+/* Mobile-optimized tabs */
+@media (max-width: 768px) {
+  .day-tabs {
+    gap: 0.3rem;
+    margin-bottom: 1rem;
+  }
+  
+  .day-tab {
+    min-width: 70px;
+    padding: 0.9rem 1rem;
+    font-size: 0.95rem;
+    flex: 0 0 auto; /* Don't stretch on mobile */
+  }
+  
+  .itinerary-container h2 {
+    font-size: 1.5rem;
+  }
+  
+  .duration {
+    font-size: 1rem;
+  }
+}
+
 .place-card {
   background: #FAFAFA;
   padding: 1.5rem;
@@ -110,6 +224,18 @@ defineEmits(['play-audio'])
   margin-bottom: 1.2rem;
   border: 1px solid #E5E5E5;
   transition: all 0.15s;
+  animation: fadeInCard 0.4s ease-out;
+}
+
+@keyframes fadeInCard {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .place-card:hover {
@@ -117,11 +243,20 @@ defineEmits(['play-audio'])
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+/* Mobile-optimized place cards */
+@media (max-width: 768px) {
+  .place-card {
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+  }
+}
+
 .place-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.8rem;
+  gap: 1rem;
 }
 
 .place-name {
@@ -129,6 +264,7 @@ defineEmits(['play-audio'])
   font-size: 1.35rem;
   font-weight: 600;
   flex: 1;
+  line-height: 1.3;
 }
 
 .audio-button {
@@ -141,10 +277,39 @@ defineEmits(['play-audio'])
   transition: all 0.15s;
   font-size: 0.95rem;
   font-weight: 500;
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(16, 163, 127, 0.3);
 }
 
 .audio-button:hover {
   background: #0E8C6D;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(16, 163, 127, 0.2);
+}
+
+.audio-button:active {
+  transform: translateY(0);
+}
+
+/* Mobile-optimized place header */
+@media (max-width: 768px) {
+  .place-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+  
+  .place-name {
+    font-size: 1.2rem;
+  }
+  
+  .audio-button {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    font-size: 0.9rem;
+    min-height: 44px; /* Good touch target */
+  }
 }
 
 .place-description {

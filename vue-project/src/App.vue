@@ -1,8 +1,19 @@
 <template>
   <div id="app">
     <header class="app-header">
-      <h1>TripTeller - AI Travel Guide</h1>
-      <p class="subtitle">Smart Travel Recommendations · Voice Narration · Route Planning</p>
+      <div class="header-content">
+        <div class="logo-section">
+          <h1 class="main-title">
+            <span class="title-trip">Trip</span><span class="title-teller">Teller</span>
+          </h1>
+          <div class="ai-badge">AI-Powered Travel Guide</div>
+        </div>
+        <div class="feature-tags">
+          <span class="feature-tag">Smart Recommendations</span>
+          <span class="feature-tag">Voice Narration</span>
+          <span class="feature-tag">Route Planning</span>
+        </div>
+      </div>
     </header>
 
     <main class="app-main">
@@ -359,36 +370,166 @@ body {
 }
 
 .app-header {
-  background: transparent;
-  padding: 2rem;
-  padding-bottom: 0;
+  background: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
+  padding: 3rem 0;
   text-align: center;
-  max-width: 1400px;
   width: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated background effect */
+.app-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotateGradient 20s linear infinite;
+}
+
+@keyframes rotateGradient {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.header-content {
+  max-width: 1400px;
   margin: 0 auto;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 1;
 }
 
-.app-header h1 {
-  background: white;
-  padding: 2.5rem 3rem;
-  border-radius: 12px;
-  border: 1px solid #E5E5E5;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  font-size: 3rem;
-  color: #202123;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
+.logo-section {
+  margin-bottom: 1.5rem;
+  animation: fadeInDown 0.8s ease-out;
 }
 
-.subtitle {
-  background: white;
-  padding: 1.5rem 3rem;
-  border-radius: 12px;
-  border: 1px solid #E5E5E5;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  color: #6E6E80;
-  font-size: 1.3rem;
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.main-title {
+  font-size: 4rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+.title-trip {
+  color: white;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  display: inline-block;
+  animation: slideInLeft 0.6s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.title-teller {
+  background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  display: inline-block;
+  animation: slideInRight 0.6s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.ai-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
   margin-top: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  animation: fadeIn 1s ease-out 0.3s both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.feature-tags {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  animation: fadeInUp 0.8s ease-out 0.5s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feature-tag {
+  background: rgba(255, 255, 255, 0.95);
+  color: #0891b2;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.feature-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: white;
+  color: #0e7490;
 }
 
 .app-main {
@@ -397,6 +538,18 @@ body {
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
+  animation: fadeInContent 0.6s ease-out 0.8s both;
+}
+
+@keyframes fadeInContent {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .error-message {
@@ -414,6 +567,18 @@ body {
   border-radius: 8px;
   padding: 1rem 1.5rem;
   margin: 1rem 0;
+  animation: slideInNotification 0.4s ease-out;
+}
+
+@keyframes slideInNotification {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .confirmed-text {
@@ -433,6 +598,18 @@ body {
   display: inline-block;
   margin-right: 0.5rem;
   flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
 }
 
 .content-grid {
@@ -448,6 +625,26 @@ body {
   padding: 2rem;
   border: 1px solid #E5E5E5;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  animation: fadeInPanel 0.5s ease-out;
+}
+
+@keyframes fadeInPanel {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.left-panel {
+  animation-delay: 0.1s;
+}
+
+.right-panel {
+  animation-delay: 0.2s;
 }
 
 .poster-section {
@@ -572,8 +769,54 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .app-header h1 {
-    font-size: 1.8rem;
+  .main-title {
+    font-size: 2.5rem;
+  }
+  
+  .app-header {
+    padding: 2rem 0;
+  }
+  
+  .header-content {
+    padding: 0 1.5rem;
+  }
+  
+  .app-main {
+    padding: 1.5rem;
+  }
+  
+  .feature-tags {
+    gap: 0.6rem;
+  }
+  
+  .feature-tag {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-title {
+    font-size: 2rem;
+    letter-spacing: -1px;
+  }
+  
+  .ai-badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 1.2rem;
+  }
+  
+  .feature-tag {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.9rem;
+  }
+  
+  .header-content {
+    padding: 0 1rem;
+  }
+  
+  .app-main {
+    padding: 1rem;
   }
 }
 </style>
