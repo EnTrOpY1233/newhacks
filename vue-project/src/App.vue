@@ -26,6 +26,13 @@
         </p>
       </div>
 
+      <!-- Weather and Events Information -->
+      <WeatherInfo 
+        v-if="weatherInfo || eventsInfo.length > 0"
+        :weather="weatherInfo"
+        :events="eventsInfo"
+      />
+
       <div v-if="itinerary" class="content-grid">
         <div class="left-panel">
           <ItineraryDisplay :itinerary="itinerary" @play-audio="handlePlayAudio" />
@@ -81,6 +88,7 @@ import ItineraryDisplay from './components/ItineraryDisplay.vue'
 import MapView from './components/MapView.vue'
 import AudioPlayer from './components/AudioPlayer.vue'
 import TravelTips from './components/TravelTips.vue'
+import WeatherInfo from './components/WeatherInfo.vue'
 
 const loading = ref(false)
 const error = ref(null)
@@ -88,10 +96,13 @@ const currentCity = ref('')
 const confirmedPlace = ref(null)
 const itinerary = ref(null)
 const posterImage = ref(null)
+const weatherInfo = ref(null)
+const eventsInfo = ref([])
 const travelOptions = ref({
   days: 3,
   intensity: 'moderate',
-  preferences: []
+  preferences: [],
+  start_date: null
 })
 
 // Audio player refs and state
@@ -135,8 +146,15 @@ const generateItinerary = async (place) => {
   currentCity.value = cityName
   itinerary.value = null
   posterImage.value = null
+  weatherInfo.value = null
+  eventsInfo.value = []
 
   try {
+    // Fetch weather and events if date is selected
+    if (travelOptions.value.start_date) {
+      await fetchWeatherAndEvents(cityName, place, travelOptions.value.start_date)
+    }
+
     const response = await fetch(`${API_BASE_URL}/api/generate-itinerary`, {
       method: 'POST',
       headers: {
@@ -147,6 +165,7 @@ const generateItinerary = async (place) => {
         days: travelOptions.value.days,
         intensity: travelOptions.value.intensity,
         preferences: travelOptions.value.preferences,
+        start_date: travelOptions.value.start_date,
         // Include additional location context for better AI results
         location_context: {
           state: place.state,
@@ -175,6 +194,54 @@ const generateItinerary = async (place) => {
     console.error('Error:', err)
   } finally {
     loading.value = false
+  }
+}
+
+/**
+ * Fetch weather and events information for the travel date
+ */
+const fetchWeatherAndEvents = async (city, place, startDate) => {
+  try {
+    // Fetch weather information
+    const weatherResponse = await fetch(`${API_BASE_URL}/api/weather`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        city: city,
+        lat: place.location?.lat,
+        lon: place.location?.lng,
+        date: startDate
+      })
+    })
+    
+    if (weatherResponse.ok) {
+      const weatherData = await weatherResponse.json()
+      weatherInfo.value = weatherData.weather
+    }
+    
+    // Fetch events information
+    const eventsResponse = await fetch(`${API_BASE_URL}/api/events`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        city: city,
+        country: place.country,
+        date: startDate
+      })
+    })
+    
+    if (eventsResponse.ok) {
+      const eventsData = await eventsResponse.json()
+      eventsInfo.value = eventsData.events
+    }
+    
+  } catch (err) {
+    console.warn('Failed to fetch weather/events:', err)
+    // Don't fail the whole process if weather/events fail
   }
 }
 

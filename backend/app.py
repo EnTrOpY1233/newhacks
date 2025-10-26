@@ -28,6 +28,7 @@ OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
+OPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY')
 
 # Check which AI service to use (priority order)
 cerebras_client = None
@@ -85,7 +86,8 @@ def health_check():
         'openrouter_configured': bool(OPENROUTER_API_KEY),
         'gemini_configured': bool(GEMINI_API_KEY),
         'elevenlabs_configured': bool(ELEVENLABS_API_KEY),
-        'maps_configured': bool(GOOGLE_MAPS_API_KEY)
+        'maps_configured': bool(GOOGLE_MAPS_API_KEY),
+        'weather_configured': bool(OPENWEATHER_API_KEY)
     })
 
 
@@ -960,6 +962,189 @@ def get_sample_itinerary(city, days):
     sample_data['places'] = all_places
 
     return sample_data
+
+
+@app.route('/api/weather', methods=['POST'])
+def get_weather():
+    """Get weather information for a location and date"""
+    try:
+        data = request.get_json()
+        city = data.get('city', '')
+        lat = data.get('lat', '')
+        lon = data.get('lon', '')
+        date = data.get('date', '')  # Date for future implementation with forecast API
+        
+        if not city and not (lat and lon):
+            return jsonify({'error': 'Please provide city name or coordinates'}), 400
+        
+        if not OPENWEATHER_API_KEY:
+            logger.warning("OpenWeather API key not configured")
+            return jsonify({'error': 'Weather API not configured'}), 500
+        
+        # Use OpenWeather Current Weather API
+        if lat and lon:
+            url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric"
+        else:
+            url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPENWEATHER_API_KEY}&units=metric"
+        
+        logger.info(f"🌤️ Getting weather for: {city}")
+        response = requests.get(url)
+        response.raise_for_status()
+        
+        weather_data = response.json()
+        
+        # Format weather information
+        weather_info = {
+            'temperature': weather_data['main']['temp'],
+            'feels_like': weather_data['main']['feels_like'],
+            'humidity': weather_data['main']['humidity'],
+            'description': weather_data['weather'][0]['description'],
+            'icon': weather_data['weather'][0]['icon'],
+            'wind_speed': weather_data['wind']['speed'],
+            'city': weather_data['name'],
+            'country': weather_data['sys']['country']
+        }
+        
+        logger.info(f"✅ Weather data retrieved for {city}")
+        return jsonify({'weather': weather_info}), 200
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"❌ Weather API error: {str(e)}")
+        return jsonify({'error': 'Failed to get weather data'}), 500
+    except Exception as e:
+        logger.error(f"❌ Weather error: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+@app.route('/api/events', methods=['POST'])
+def get_events():
+    """Get special events, festivals, and holidays for a location and date"""
+    try:
+        data = request.get_json()
+        city = data.get('city', '')
+        country = data.get('country', '')
+        date = data.get('date', '')
+        
+        if not city:
+            return jsonify({'error': 'Please provide city name'}), 400
+        
+        # Parse date
+        from datetime import datetime
+        if date:
+            try:
+                event_date = datetime.strptime(date, '%Y-%m-%d')
+                month = event_date.month
+                day = event_date.day
+            except ValueError:
+                return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+        else:
+            # Use current date if not provided
+            now = datetime.now()
+            month = now.month
+            day = now.day
+        
+        # Get events for the date
+        events = get_events_for_date(city, country, month, day)
+        
+        logger.info(f"🎉 Found {len(events)} events for {city} on {month}/{day}")
+        return jsonify({'events': events}), 200
+        
+    except Exception as e:
+        logger.error(f"❌ Events error: {str(e)}")
+        return jsonify({'error': 'Failed to get events'}), 500
+
+
+def get_events_for_date(city, country, month, day):
+    """Get events for a specific date"""
+    events = []
+    
+    # International holidays
+    international_holidays = {
+        (1, 1): "New Year's Day",
+        (2, 14): "Valentine's Day",
+        (3, 8): "International Women's Day",
+        (4, 1): "April Fools' Day",
+        (5, 1): "International Workers' Day",
+        (6, 1): "International Children's Day",
+        (10, 31): "Halloween",
+        (12, 25): "Christmas",
+        (12, 31): "New Year's Eve"
+    }
+    
+    # Chinese holidays (approximate dates)
+    chinese_holidays = {
+        (1, 1): "New Year's Day",
+        (2, 10): "Chinese New Year (Spring Festival)",  # Approximate
+        (3, 8): "Women's Day",
+        (4, 5): "Qingming Festival (Tomb Sweeping Day)",  # Approximate
+        (5, 1): "Labor Day",
+        (6, 1): "Children's Day",
+        (9, 10): "Teachers' Day",
+        (10, 1): "National Day"
+    }
+    
+    # Check for international holidays
+    if (month, day) in international_holidays:
+        events.append({
+            'name': international_holidays[(month, day)],
+            'type': 'holiday',
+            'description': f'International holiday: {international_holidays[(month, day)]}',
+            'impact': 'high'
+        })
+    
+    # Check for Chinese holidays if in China
+    if country and 'china' in country.lower():
+        if (month, day) in chinese_holidays:
+            events.append({
+                'name': chinese_holidays[(month, day)],
+                'type': 'holiday',
+                'description': f'Chinese holiday: {chinese_holidays[(month, day)]}',
+                'impact': 'high'
+            })
+    
+    # City-specific events
+    city_events = get_city_specific_events(city, month, day)
+    events.extend(city_events)
+    
+    return events
+
+
+def get_city_specific_events(city, month, day):
+    """Get city-specific events (simplified database)"""
+    events = []
+    
+    # Major cities and their known events
+    city_events = {
+        'tokyo': {
+            (3, 20): {'name': 'Cherry Blossom Festival', 'type': 'festival', 'description': 'Tokyo cherry blossom season', 'impact': 'high'},
+            (7, 1): {'name': 'Summer Festival', 'type': 'festival', 'description': 'Traditional summer celebration', 'impact': 'medium'},
+            (12, 31): {'name': 'New Year Countdown', 'type': 'event', 'description': 'Shibuya New Year countdown event', 'impact': 'high'}
+        },
+        'paris': {
+            (7, 14): {'name': 'Bastille Day', 'type': 'holiday', 'description': 'French National Day', 'impact': 'high'},
+            (4, 1): {'name': 'April Fools Day', 'type': 'holiday', 'description': 'Traditional April Fools', 'impact': 'low'},
+            (12, 25): {'name': 'Christmas', 'type': 'holiday', 'description': 'Christmas celebration', 'impact': 'high'}
+        },
+        'london': {
+            (6, 2): {'name': "Queen's Birthday", 'type': 'holiday', 'description': 'UK Queen Birthday celebration', 'impact': 'medium'},
+            (11, 5): {'name': 'Bonfire Night', 'type': 'festival', 'description': 'Traditional bonfire festival', 'impact': 'medium'},
+            (12, 25): {'name': 'Christmas', 'type': 'holiday', 'description': 'Christmas celebration', 'impact': 'high'}
+        },
+        'new york': {
+            (7, 4): {'name': 'Independence Day', 'type': 'holiday', 'description': 'US Independence Day', 'impact': 'high'},
+            (11, 24): {'name': 'Thanksgiving', 'type': 'holiday', 'description': 'Thanksgiving celebration', 'impact': 'high'},
+            (12, 31): {'name': 'Times Square Countdown', 'type': 'event', 'description': 'New Year countdown event', 'impact': 'high'}
+        }
+    }
+    
+    # Check if city has specific events
+    city_lower = city.lower()
+    for city_name, events_dict in city_events.items():
+        if city_lower in city_name or city_name in city_lower:
+            if (month, day) in events_dict:
+                events.append(events_dict[(month, day)])
+    
+    return events
 
 
 if __name__ == '__main__':

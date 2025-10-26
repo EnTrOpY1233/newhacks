@@ -44,6 +44,15 @@
         />
       </div>
       
+      <!-- Date Picker Component -->
+      <div class="date-picker-wrapper">
+        <DatePicker 
+          v-model="selectedDate"
+          @date-selected="handleDateSelected"
+          :min-date="minDate"
+        />
+      </div>
+      
       <button 
         @click="handleSearch" 
         @touchend.prevent="handleSearchTouch"
@@ -193,6 +202,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import SpeechInput from './SpeechInput.vue'
+import DatePicker from './DatePicker.vue'
 
 const props = defineProps({
   loading: {
@@ -225,6 +235,10 @@ const searchError = ref(null)
 const selectedDays = ref(3)
 const selectedIntensity = ref('moderate')
 const selectedPreferences = ref([])
+const selectedDate = ref(null)
+
+// Date picker
+const minDate = computed(() => new Date())
 
 // Intensity slider mapping
 const intensitySliderValue = ref(1) // 0 = relaxed, 1 = moderate, 2 = intensive
@@ -296,8 +310,16 @@ const emitOptions = () => {
   emit('options-change', {
     days: selectedDays.value,
     intensity: selectedIntensity.value,
-    preferences: selectedPreferences.value
+    preferences: selectedPreferences.value,
+    start_date: selectedDate.value
   })
+}
+
+// Handle date selection
+const handleDateSelected = (date) => {
+  console.log('Date selected:', date)
+  selectedDate.value = date
+  emitOptions()
 }
 
 /**
