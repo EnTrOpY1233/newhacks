@@ -36,6 +36,14 @@
         </div>
       </div>
       
+      <!-- Speech Input Component -->
+      <div class="speech-input-wrapper">
+        <SpeechInput 
+          @speech-result="handleSpeechResult"
+          language="zh-CN"
+        />
+      </div>
+      
       <button 
         @click="handleSearch" 
         @touchend.prevent="handleSearchTouch"
@@ -184,6 +192,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import SpeechInput from './SpeechInput.vue'
 
 const props = defineProps({
   loading: {
@@ -463,6 +472,15 @@ const selectCity = (city) => {
   console.log('Selected city:', city)
 }
 
+// Handle speech recognition result
+const handleSpeechResult = (transcript) => {
+  console.log('Speech result:', transcript)
+  cityName.value = transcript
+  showPlacePicker.value = false
+  // Optionally auto-search after speech input
+  // handleSearch()
+}
+
 onMounted(() => {
   if (!apiKey) {
     console.warn('Google Maps API Key not configured, Place Picker may not work properly')
@@ -493,6 +511,11 @@ onMounted(() => {
   gap: 1.5rem;
   margin-bottom: 2rem;
   align-items: stretch;
+}
+
+.speech-input-wrapper {
+  display: flex;
+  align-items: center;
 }
 
 .input-group {

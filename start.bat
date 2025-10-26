@@ -71,11 +71,11 @@ if not exist ".env" (
 
 REM 后台启动 Flask
 echo    Starting Flask server...
-start /B python app.py
+start /B "" python app.py
 timeout /t 3 /nobreak >nul
 
 REM 检查后端是否启动成功
-curl -s http://localhost:5000/api/health >nul 2>&1
+powershell -Command "try { Invoke-WebRequest -Uri 'http://localhost:5000/api/health' -UseBasicParsing -TimeoutSec 5 | Out-Null; exit 0 } catch { exit 1 }" >nul 2>&1
 if %errorlevel% equ 0 (
     echo ✅ Backend started successfully - http://localhost:5000
 ) else (

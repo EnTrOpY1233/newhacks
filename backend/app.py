@@ -8,6 +8,9 @@ import requests
 from io import BytesIO
 import re
 from urllib.parse import quote, urljoin
+import speech_recognition as sr
+import tempfile
+import wave
 
 # Load environment variables
 load_dotenv()
@@ -695,6 +698,106 @@ def get_ticket_info():
     except Exception as e:
         logger.error(f"Error getting ticket info: {str(e)}")
         return jsonify({'error': f'Failed to get ticket info: {str(e)}'}), 500
+
+
+@app.route('/api/speech-to-text', methods=['POST'])
+def speech_to_text():
+    """Convert speech audio to text"""
+    try:
+        # 检查是否有音频文件
+        if 'audio' not in request.files:
+            return jsonify({'error': 'No audio file provided'}), 400
+        
+        audio_file = request.files['audio']
+        if audio_file.filename == '':
+            return jsonify({'error': 'No audio file selected'}), 400
+
+        # 创建临时文件保存音频
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
+            audio_file.save(temp_file.name)
+            temp_file_path = temp_file.name
+
+        try:
+            # 初始化语音识别器
+            recognizer = sr.Recognizer()
+            
+            # 读取音频文件
+            with sr.AudioFile(temp_file_path) as source:
+                # 调整环境噪音
+                recognizer.adjust_for_ambient_noise(source)
+                audio_data = recognizer.record(source)
+            
+            # 尝试使用Google语音识别（支持中文）
+            try:
+                text = recognizer.recognize_google(audio_data, language='zh-CN')
+                logger.info(f"Speech recognition successful: {text}")
+                return jsonify({
+                    'text': text,
+                    'confidence': 0.9,  # Google API不返回置信度，使用默认值
+                    'language': 'zh-CN'
+                })
+            except sr.UnknownValueError:
+                return jsonify({'error': '无法识别语音内容，请重试'}), 400
+            except sr.RequestError as e:
+                logger.error(f"Google Speech API error: {e}")
+                # 如果Google API失败，尝试其他方法
+                return jsonify({'error': '语音识别服务暂时不可用，请稍后重试'}), 500
+                
+        finally:
+            # 清理临时文件
+            if os.path.exists(temp_file_path):
+                os.unlink(temp_file_path)
+
+    except Exception as e:
+        logger.error(f"Speech to text error: {str(e)}")
+        return jsonify({'error': f'语音识别失败: {str(e)}'}), 500
+
+
+@app.route('/api/speech-to-text-offline', methods=['POST'])
+def speech_to_text_offline():
+    """Offline speech recognition using local models"""
+    try:
+        if 'audio' not in request.files:
+            return jsonify({'error': 'No audio file provided'}), 400
+        
+        audio_file = request.files['audio']
+        if audio_file.filename == '':
+            return jsonify({'error': 'No audio file selected'}), 400
+
+        # 创建临时文件
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
+            audio_file.save(temp_file.name)
+            temp_file_path = temp_file.name
+
+        try:
+            recognizer = sr.Recognizer()
+            
+            with sr.AudioFile(temp_file_path) as source:
+                recognizer.adjust_for_ambient_noise(source)
+                audio_data = recognizer.record(source)
+            
+            # 尝试使用Sphinx离线识别（需要安装pocketsphinx）
+            try:
+                text = recognizer.recognize_sphinx(audio_data, language='zh-CN')
+                return jsonify({
+                    'text': text,
+                    'confidence': 0.7,
+                    'language': 'zh-CN',
+                    'method': 'offline'
+                })
+            except sr.UnknownValueError:
+                return jsonify({'error': '无法识别语音内容'}), 400
+            except Exception as e:
+                logger.error(f"Offline recognition error: {e}")
+                return jsonify({'error': '离线语音识别失败'}), 500
+                
+        finally:
+            if os.path.exists(temp_file_path):
+                os.unlink(temp_file_path)
+
+    except Exception as e:
+        logger.error(f"Offline speech to text error: {str(e)}")
+        return jsonify({'error': f'离线语音识别失败: {str(e)}'}), 500
 
 
 def get_sample_itinerary(city, days):
