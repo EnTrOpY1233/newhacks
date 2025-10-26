@@ -19,7 +19,7 @@
       <!-- Show confirmed location info -->
       <div v-if="confirmedPlace" class="location-confirmed">
         <p class="confirmed-text">
-          <span class="check-icon">✓</span>
+          <span class="check-icon"></span>
           Location confirmed: <strong>{{ confirmedPlace.city }}</strong>
           <span v-if="confirmedPlace.state">, {{ confirmedPlace.state }}</span>
           <span>, {{ confirmedPlace.country }}</span>
@@ -50,12 +50,12 @@
       <!-- Audio notification toast -->
       <transition name="toast-fade">
         <div v-if="audioNotification" class="audio-toast">
-          <div class="toast-icon">🔊</div>
+          <div class="toast-icon">♪</div>
           <div class="toast-content">
             <div class="toast-title">{{ audioNotification.title }}</div>
             <div class="toast-status">{{ audioNotification.status }}</div>
           </div>
-          <button @click="stopAudio" class="toast-close">✕</button>
+          <button @click="stopAudio" class="toast-close">×</button>
         </div>
       </transition>
 
@@ -360,14 +360,12 @@ body {
 .check-icon {
   background: #10B981;
   color: white;
-  width: 24px;
-  height: 24px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 0.9rem;
+  display: inline-block;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
 }
 
 .content-grid {

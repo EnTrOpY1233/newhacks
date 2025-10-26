@@ -54,7 +54,7 @@ defineProps({
 }
 
 .tips-list li::before {
-  content: "✓";
+  content: "•";
   position: absolute;
   left: 1rem;
   color: #10A37F;

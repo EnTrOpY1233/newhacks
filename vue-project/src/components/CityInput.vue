@@ -182,7 +182,7 @@
             :class="['option-btn', 'pref-btn', { active: selectedPreferences.includes(pref.value) }]"
             :disabled="loading"
           >
-            {{ pref.emoji }} {{ pref.label }}
+            {{ pref.label }}
           </button>
         </div>
       </div>
@@ -242,14 +242,14 @@ const currentIntensityLabel = computed(() => {
 })
 
 const preferenceOptions = [
-  { value: 'food', label: 'Food', emoji: '🍽️' },
-  { value: 'historical', label: 'Historical', emoji: '🏛️' },
-  { value: 'natural', label: 'Natural', emoji: '🌳' },
-  { value: 'culture', label: 'Culture', emoji: '🎭' },
-  { value: 'shopping', label: 'Shopping', emoji: '🛍️' },
-  { value: 'adventure', label: 'Adventure', emoji: '🏔️' },
-  { value: 'nightlife', label: 'Nightlife', emoji: '🌃' },
-  { value: 'art', label: 'Art', emoji: '🎨' }
+  { value: 'food', label: 'Food' },
+  { value: 'historical', label: 'Historical' },
+  { value: 'natural', label: 'Natural' },
+  { value: 'culture', label: 'Culture' },
+  { value: 'shopping', label: 'Shopping' },
+  { value: 'adventure', label: 'Adventure' },
+  { value: 'nightlife', label: 'Nightlife' },
+  { value: 'art', label: 'Art' }
 ]
 
 /**

@@ -32,9 +32,6 @@
         <!-- Ticket Information -->
         <div v-if="place.ticket_info" class="ticket-info">
           <div class="ticket-status" :class="{ 'requires-ticket': place.ticket_info.requires_ticket, 'free': !place.ticket_info.requires_ticket }">
-            <span class="ticket-icon">
-              {{ place.ticket_info.requires_ticket ? '🎫' : '🆓' }}
-            </span>
             <span class="ticket-text">
               {{ place.ticket_info.requires_ticket ? 'Requires Ticket' : 'Free Entry' }}
             </span>
@@ -50,7 +47,7 @@
               rel="noopener noreferrer"
               class="booking-link"
             >
-              🎟️ Book Tickets
+              Book Tickets
             </a>
           </div>
           

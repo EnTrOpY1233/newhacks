@@ -3,7 +3,7 @@
     <div class="audio-player">
       <div class="player-header">
         <h3>{{ title }}</h3>
-        <button @click="$emit('close')" class="close-button">✕</button>
+        <button @click="$emit('close')" class="close-button">×</button>
       </div>
       
       <div class="player-body">
