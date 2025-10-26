@@ -30,42 +30,44 @@ ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 OPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY')
 
-# Check which AI service to use (priority order)
+# Check which AI service to use (priority order: Gemini -> Cerebras -> OpenRouter)
 cerebras_client = None
-model = None
+gemini_client = None
 AI_SERVICE = None
 
-if CEREBRAS_API_KEY:
+# Try Gemini first (primary option)
+if GEMINI_API_KEY:
+    try:
+        from google import genai
+        gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+        AI_SERVICE = 'gemini'
+        logger.info("✅ Using Gemini API (Primary)")
+    except ImportError as e:
+        logger.warning(f"Gemini SDK not installed: {e}, falling back to next option")
+        logger.info("   Install with: pip install google-genai")
+        AI_SERVICE = None
+    except Exception as e:
+        logger.error(f"Failed to initialize Gemini client: {e}")
+        AI_SERVICE = None
+
+# Try Cerebras as backup
+if not AI_SERVICE and CEREBRAS_API_KEY:
     try:
         from cerebras.cloud.sdk import Cerebras
         cerebras_client = Cerebras(api_key=CEREBRAS_API_KEY)
         AI_SERVICE = 'cerebras'
-        logger.info("✅ Using Cerebras API")
+        logger.info("✅ Using Cerebras API (Backup)")
     except ImportError as e:
-        logger.warning(
-            f"Cerebras SDK not installed: {e}, falling back to next option")
+        logger.warning(f"Cerebras SDK not installed: {e}, falling back to next option")
         AI_SERVICE = None
     except Exception as e:
         logger.error(f"Failed to initialize Cerebras client: {e}")
         AI_SERVICE = None
 
+# Try OpenRouter as last resort
 if not AI_SERVICE and OPENROUTER_API_KEY:
     AI_SERVICE = 'openrouter'
-    logger.info("✅ Using OpenRouter API")
-
-if not AI_SERVICE and GEMINI_API_KEY:
-    try:
-        import google.generativeai as genai
-        genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-pro')
-        AI_SERVICE = 'gemini'
-        logger.info("✅ Using Gemini API")
-    except ImportError as e:
-        logger.warning(f"Gemini SDK not installed: {e}")
-        AI_SERVICE = None
-    except Exception as e:
-        logger.error(f"Failed to initialize Gemini: {e}")
-        AI_SERVICE = None
+    logger.info("✅ Using OpenRouter API (Fallback)")
 
 if not AI_SERVICE:
     logger.warning("⚠️  No AI API configured, will use sample data")
@@ -207,6 +209,25 @@ def call_cerebras_api(prompt):
         raise
 
 
+def call_gemini_api(prompt):
+    """Call Gemini API using new google-genai SDK"""
+    if not gemini_client:
+        raise Exception("Gemini client not initialized")
+
+    try:
+        logger.info("📡 Calling Gemini API...")
+        response = gemini_client.models.generate_content(
+            model="gemini-2.0-flash-exp",
+            contents=prompt,
+        )
+        response_content = response.text
+        logger.info(f"✅ Gemini API response received ({len(response_content)} chars)")
+        return response_content
+    except Exception as e:
+        logger.error(f"❌ Gemini API error: {str(e)}")
+        raise
+
+
 def call_openrouter_api(prompt):
     """Call OpenRouter API"""
     url = "https://openrouter.ai/api/v1/chat/completions"
@@ -336,14 +357,13 @@ Return in JSON format with the following structure:
 Return only JSON, no additional text.
 """
 
-        # Call appropriate AI service
-        if AI_SERVICE == 'cerebras':
+        # Call appropriate AI service (Gemini first, then Cerebras as backup)
+        if AI_SERVICE == 'gemini':
+            response_text = call_gemini_api(prompt)
+        elif AI_SERVICE == 'cerebras':
             response_text = call_cerebras_api(prompt)
         elif AI_SERVICE == 'openrouter':
             response_text = call_openrouter_api(prompt)
-        elif AI_SERVICE == 'gemini':
-            response = model.generate_content(prompt)
-            response_text = response.text.strip()
         else:
             return jsonify({
                 'itinerary': get_sample_itinerary(city, days)
