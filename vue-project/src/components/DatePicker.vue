@@ -1,20 +1,21 @@
 <template>
   <div class="date-picker-container">
-    <label 
+    <div 
       class="date-icon-button"
       :class="{ 'has-date': selectedDate }"
       :title="selectedDate ? formatDate(selectedDate) : 'Select travel date (Optional)'"
+      @click="triggerDatePicker"
     >
       <span class="date-icon">📅</span>
-      <input 
-        type="date" 
-        ref="dateInput"
-        v-model="selectedDate"
-        @change="handleDateChange"
-        :min="minDate"
-        class="date-input-hidden"
-      />
-    </label>
+    </div>
+    <input 
+      type="date" 
+      ref="dateInput"
+      v-model="selectedDate"
+      @change="handleDateChange"
+      :min="minDate"
+      class="date-input-completely-hidden"
+    />
   </div>
 </template>
 
@@ -41,6 +42,12 @@ const minDate = computed(() => {
   const date = props.minDate
   return date.toISOString().split('T')[0]
 })
+
+const triggerDatePicker = () => {
+  if (dateInput.value) {
+    dateInput.value.showPicker()
+  }
+}
 
 const handleDateChange = () => {
   emit('update:modelValue', selectedDate.value)
@@ -107,15 +114,12 @@ const formatDate = (dateString) => {
   filter: brightness(0) invert(1);
 }
 
-.date-input-hidden {
+.date-input-completely-hidden {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
 }
 </style>

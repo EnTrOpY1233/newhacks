@@ -36,22 +36,21 @@
         </div>
       </div>
       
-      <!-- Speech Input and Date Picker in the same row -->
-      <div class="options-row">
-        <div class="speech-input-wrapper">
-          <SpeechInput 
-            @speech-result="handleSpeechResult"
-            language="zh-CN"
-          />
-        </div>
-        
-        <div class="date-picker-wrapper">
-          <DatePicker 
-            v-model="selectedDate"
-            @date-selected="handleDateSelected"
-            :min-date="minDate"
-          />
-        </div>
+      <!-- Speech Input -->
+      <div class="speech-input-wrapper">
+        <SpeechInput 
+          @speech-result="handleSpeechResult"
+          language="zh-CN"
+        />
+      </div>
+      
+      <!-- Date Picker -->
+      <div class="date-picker-wrapper">
+        <DatePicker 
+          v-model="selectedDate"
+          @date-selected="handleDateSelected"
+          :min-date="minDate"
+        />
       </div>
       
       <button 
