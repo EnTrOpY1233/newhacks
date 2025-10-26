@@ -7,7 +7,7 @@
     ></gmpx-api-loader>
 
     <div class="input-wrapper">
-      <!-- Regular input with Place Picker hidden for auto-complete -->
+      <!-- Destination Input -->
       <div class="input-group">
         <input
           ref="cityInput"
@@ -36,21 +36,22 @@
         </div>
       </div>
       
-      <!-- Speech Input Component -->
-      <div class="speech-input-wrapper">
-        <SpeechInput 
-          @speech-result="handleSpeechResult"
-          language="zh-CN"
-        />
-      </div>
-      
-      <!-- Date Picker Component -->
-      <div class="date-picker-wrapper">
-        <DatePicker 
-          v-model="selectedDate"
-          @date-selected="handleDateSelected"
-          :min-date="minDate"
-        />
+      <!-- Speech Input and Date Picker in the same row -->
+      <div class="options-row">
+        <div class="speech-input-wrapper">
+          <SpeechInput 
+            @speech-result="handleSpeechResult"
+            language="zh-CN"
+          />
+        </div>
+        
+        <div class="date-picker-wrapper">
+          <DatePicker 
+            v-model="selectedDate"
+            @date-selected="handleDateSelected"
+            :min-date="minDate"
+          />
+        </div>
       </div>
       
       <button 
@@ -529,15 +530,46 @@ onMounted(() => {
 }
 
 .input-wrapper {
-  display: flex;
-  gap: 1.5rem;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 1rem;
   margin-bottom: 2rem;
   align-items: stretch;
+}
+
+.options-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .speech-input-wrapper {
   display: flex;
   align-items: center;
+}
+
+.date-picker-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+/* Mobile responsive */
+@media (max-width: 1024px) {
+  .input-wrapper {
+    grid-template-columns: 1fr;
+  }
+  
+  .options-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .options-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .input-group {

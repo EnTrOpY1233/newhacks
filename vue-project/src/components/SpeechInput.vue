@@ -19,12 +19,12 @@
         </div>
       </div>
       <span class="btn-text">
-        {{ isRecording ? '停止录音' : isProcessing ? '处理中...' : '语音输入' }}
+        {{ isRecording ? 'Stop Recording' : isProcessing ? 'Processing...' : 'Voice Input' }}
       </span>
     </button>
     
     <div v-if="transcript" class="transcript">
-      <p><strong>识别结果：</strong>{{ transcript }}</p>
+      <p><strong>Recognition Result: </strong>{{ transcript }}</p>
     </div>
     
     <div v-if="error" class="error">
@@ -58,9 +58,9 @@ export default {
   },
   methods: {
     initializeSpeechRecognition() {
-      // 检查浏览器支持
+      // Check browser support
       if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        this.error = '您的浏览器不支持语音识别功能'
+        this.error = 'Your browser does not support speech recognition'
         return
       }
 
@@ -98,14 +98,14 @@ export default {
 
     getErrorMessage(error) {
       const errorMessages = {
-        'no-speech': '未检测到语音，请重试',
-        'audio-capture': '无法访问麦克风，请检查权限',
-        'not-allowed': '麦克风权限被拒绝，请在浏览器设置中允许',
-        'network': '网络错误，请检查网络连接',
-        'aborted': '语音识别被中断',
-        'language-not-supported': '不支持当前语言设置'
+        'no-speech': 'No speech detected, please try again',
+        'audio-capture': 'Cannot access microphone, please check permissions',
+        'not-allowed': 'Microphone permission denied, please allow in browser settings',
+        'network': 'Network error, please check your connection',
+        'aborted': 'Speech recognition interrupted',
+        'language-not-supported': 'Current language not supported'
       }
-      return errorMessages[error] || `语音识别错误: ${error}`
+      return errorMessages[error] || `Speech recognition error: ${error}`
     },
 
     async toggleRecording() {
@@ -127,7 +127,7 @@ export default {
         // 开始语音识别
         this.recognition.start()
       } catch (error) {
-        this.error = '无法访问麦克风，请检查权限设置'
+        this.error = 'Cannot access microphone, please check permissions'
         this.isProcessing = false
       }
     },
@@ -157,7 +157,7 @@ export default {
         this.mediaRecorder.start()
         this.isRecording = true
       } catch (error) {
-        this.error = '无法访问麦克风'
+        this.error = 'Cannot access microphone'
       }
     },
 
@@ -173,14 +173,14 @@ export default {
         })
 
         if (!response.ok) {
-          throw new Error('语音识别失败')
+          throw new Error('Speech recognition failed')
         }
 
         const result = await response.json()
         this.transcript = result.text
         this.$emit('speech-result', result.text)
       } catch (error) {
-        this.error = '语音识别失败，请重试'
+        this.error = 'Speech recognition failed, please try again'
       } finally {
         this.isProcessing = false
       }
