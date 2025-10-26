@@ -1,12 +1,8 @@
 <template>
   <div class="date-picker-container">
-    <button 
-      type="button"
-      @click="openDatePicker"
-      class="date-icon-button"
-      :title="selectedDate ? formatDate(selectedDate) : 'Select travel date (Optional)'"
-      :class="{ 'has-date': selectedDate }"
-    >
+    <div class="date-icon-button"
+         :class="{ 'has-date': selectedDate }"
+         :title="selectedDate ? formatDate(selectedDate) : 'Select travel date (Optional)'">
       <span class="date-icon">📅</span>
       <input 
         type="date" 
@@ -14,9 +10,9 @@
         v-model="selectedDate"
         @change="handleDateChange"
         :min="minDate"
-        class="date-input-hidden"
+        class="date-input-overlay"
       />
-    </button>
+    </div>
   </div>
 </template>
 
@@ -43,14 +39,6 @@ const minDate = computed(() => {
   const date = props.minDate
   return date.toISOString().split('T')[0]
 })
-
-// Function to trigger the date picker
-const openDatePicker = (event) => {
-  event.preventDefault()
-  if (dateInput.value) {
-    dateInput.value.click()
-  }
-}
 
 const handleDateChange = () => {
   emit('update:modelValue', selectedDate.value)
@@ -88,7 +76,6 @@ const formatDate = (dateString) => {
   width: 48px;
   height: 48px;
   position: relative;
-  z-index: 0;
 }
 
 .date-icon-button:hover {
@@ -111,13 +98,14 @@ const formatDate = (dateString) => {
 .date-icon {
   font-size: 1.5rem;
   display: block;
+  pointer-events: none;
 }
 
 .date-icon-button.has-date .date-icon {
   filter: brightness(0) invert(1);
 }
 
-.date-input-hidden {
+.date-input-overlay {
   position: absolute;
   top: 0;
   left: 0;
@@ -125,6 +113,8 @@ const formatDate = (dateString) => {
   height: 100%;
   opacity: 0;
   cursor: pointer;
-  z-index: 1;
+  z-index: 10;
+  padding: 0;
+  border: none;
 }
 </style>
