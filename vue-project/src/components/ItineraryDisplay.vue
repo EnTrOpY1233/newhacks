@@ -11,7 +11,17 @@
         @click="selectDay(index)"
         :class="['day-tab', { active: selectedDay === index }]"
       >
-        Day {{ index + 1 }}
+        <span class="day-text">Day {{ index + 1 }}</span>
+        <span v-if="getWeatherIcon(index)" class="weather-icon-container">
+          <img 
+            :src="getWeatherIconUrl(index)" 
+            :alt="getWeatherDescription(index)"
+            class="weather-icon-small"
+          />
+          <span v-if="getWeatherTemp(index)" class="weather-temp">
+            {{ Math.round(getWeatherTemp(index)) }}°C
+          </span>
+        </span>
       </button>
     </div>
 
@@ -80,6 +90,10 @@ const props = defineProps({
   itinerary: {
     type: Object,
     required: true
+  },
+  weatherForecast: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -105,6 +119,56 @@ const currentDaySchedule = computed(() => {
   }
   return props.itinerary.schedule[selectedDay.value]
 })
+
+/**
+ * Get weather icon for a specific day
+ */
+const getWeatherIcon = (dayIndex) => {
+  if (!props.weatherForecast || props.weatherForecast.length === 0) {
+    return null
+  }
+  if (dayIndex < props.weatherForecast.length) {
+    return props.weatherForecast[dayIndex]?.icon
+  }
+  return null
+}
+
+/**
+ * Get weather icon URL
+ */
+const getWeatherIconUrl = (dayIndex) => {
+  const icon = getWeatherIcon(dayIndex)
+  if (icon) {
+    return `https://openweathermap.org/img/wn/${icon}@2x.png`
+  }
+  return ''
+}
+
+/**
+ * Get weather description for a specific day
+ */
+const getWeatherDescription = (dayIndex) => {
+  if (!props.weatherForecast || props.weatherForecast.length === 0) {
+    return ''
+  }
+  if (dayIndex < props.weatherForecast.length) {
+    return props.weatherForecast[dayIndex]?.description || ''
+  }
+  return ''
+}
+
+/**
+ * Get weather temperature for a specific day
+ */
+const getWeatherTemp = (dayIndex) => {
+  if (!props.weatherForecast || props.weatherForecast.length === 0) {
+    return null
+  }
+  if (dayIndex < props.weatherForecast.length) {
+    return props.weatherForecast[dayIndex]?.temperature
+  }
+  return null
+}
 </script>
 
 <style scoped>
@@ -156,6 +220,10 @@ const currentDaySchedule = computed(() => {
   white-space: nowrap;
   touch-action: manipulation;
   -webkit-tap-highlight-color: rgba(16, 163, 127, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .day-tab:hover {
@@ -167,6 +235,27 @@ const currentDaySchedule = computed(() => {
   color: #10A37F;
   border-bottom-color: #10A37F;
   background: rgba(16, 163, 127, 0.08);
+}
+
+.day-text {
+  font-size: 0.95rem;
+}
+
+.weather-icon-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.weather-icon-small {
+  width: 32px;
+  height: 32px;
+}
+
+.weather-temp {
+  font-size: 0.85rem;
+  color: #6B7280;
+  font-weight: 500;
 }
 
 /* Day Content */
@@ -206,6 +295,19 @@ const currentDaySchedule = computed(() => {
     padding: 0.9rem 1rem;
     font-size: 0.95rem;
     flex: 0 0 auto; /* Don't stretch on mobile */
+  }
+  
+  .day-text {
+    font-size: 0.85rem;
+  }
+  
+  .weather-icon-small {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .weather-temp {
+    font-size: 0.75rem;
   }
   
   .itinerary-container h2 {

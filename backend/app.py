@@ -11,6 +11,7 @@ from urllib.parse import quote, urljoin
 import speech_recognition as sr
 import tempfile
 import wave
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
@@ -1013,6 +1014,66 @@ def get_weather():
         return jsonify({'error': 'Failed to get weather data'}), 500
     except Exception as e:
         logger.error(f"❌ Weather error: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+
+@app.route('/api/weather-forecast', methods=['POST'])
+def get_weather_forecast():
+    """Get weather forecast for multiple days"""
+    try:
+        data = request.get_json()
+        city = data.get('city', '')
+        lat = data.get('lat', '')
+        lon = data.get('lon', '')
+        days = data.get('days', 3)
+        
+        if not city and not (lat and lon):
+            return jsonify({'error': 'Please provide city name or coordinates'}), 400
+        
+        if not OPENWEATHER_API_KEY:
+            logger.warning("OpenWeather API key not configured")
+            return jsonify({'error': 'Weather API not configured'}), 500
+        
+        # Use OpenWeather 5-day Forecast API
+        if lat and lon:
+            url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric"
+        else:
+            url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={OPENWEATHER_API_KEY}&units=metric"
+        
+        logger.info(f"🌤️ Getting weather forecast for: {city}")
+        response = requests.get(url)
+        response.raise_for_status()
+        
+        forecast_data = response.json()
+        
+        # Format forecast data for each day
+        daily_forecasts = []
+        
+        # Group forecasts by day (first forecast for each day)
+        seen_dates = set()
+        forecast_list = forecast_data.get('list', [])
+        
+        for forecast in forecast_list:
+            date_str = forecast['dt_txt'].split()[0]  # Extract date part
+            if date_str not in seen_dates and len(daily_forecasts) < days:
+                seen_dates.add(date_str)
+                daily_forecasts.append({
+                    'date': date_str,
+                    'temperature': forecast['main']['temp'],
+                    'description': forecast['weather'][0]['description'],
+                    'icon': forecast['weather'][0]['icon'],
+                    'wind_speed': forecast['wind']['speed'],
+                    'humidity': forecast['main']['humidity']
+                })
+        
+        logger.info(f"✅ Weather forecast retrieved for {city}: {len(daily_forecasts)} days")
+        return jsonify({'forecast': daily_forecasts}), 200
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"❌ Weather forecast API error: {str(e)}")
+        return jsonify({'error': 'Failed to get weather forecast'}), 500
+    except Exception as e:
+        logger.error(f"❌ Weather forecast error: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
 
 

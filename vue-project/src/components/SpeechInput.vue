@@ -18,18 +18,7 @@
           <div class="wave"></div>
         </div>
       </div>
-      <span class="btn-text">
-        {{ isRecording ? 'Stop Recording' : isProcessing ? 'Processing...' : 'Voice Input' }}
-      </span>
     </button>
-    
-    <div v-if="transcript" class="transcript">
-      <p><strong>Recognition Result: </strong>{{ transcript }}</p>
-    </div>
-    
-    <div v-if="error" class="error">
-      <p>❌ {{ error }}</p>
-    </div>
   </div>
 </template>
 
@@ -200,18 +189,20 @@ export default {
 .speech-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
+  justify-content: center;
+  padding: 0.75rem;
   border: 2px solid #4CAF50;
   background: white;
   color: #4CAF50;
-  border-radius: 25px;
+  border-radius: 50%;
   cursor: pointer;
   font-size: 16px;
   font-weight: 500;
   transition: all 0.3s ease;
-  min-width: 140px;
-  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  width: 48px;
+  height: 48px;
 }
 
 .speech-btn:hover:not(:disabled) {
@@ -276,34 +267,5 @@ export default {
 @keyframes wave {
   0%, 40%, 100% { transform: scaleY(0.4); }
   20% { transform: scaleY(1); }
-}
-
-.transcript {
-  background: #f5f5f5;
-  padding: 12px 16px;
-  border-radius: 8px;
-  border-left: 4px solid #4CAF50;
-  max-width: 300px;
-  word-wrap: break-word;
-}
-
-.transcript p {
-  margin: 0;
-  color: #333;
-}
-
-.error {
-  background: #ffebee;
-  color: #c62828;
-  padding: 8px 12px;
-  border-radius: 6px;
-  border-left: 4px solid #f44336;
-  max-width: 300px;
-  text-align: center;
-}
-
-.error p {
-  margin: 0;
-  font-size: 14px;
 }
 </style>

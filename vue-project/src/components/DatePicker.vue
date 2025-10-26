@@ -1,20 +1,23 @@
 <template>
   <div class="date-picker-container">
-    <label class="date-label">
-      <span class="label-icon">📅</span>
-      <span class="label-text">Travel Start Date (Optional)</span>
-    </label>
-    <input 
-      type="date" 
-      v-model="selectedDate"
-      @change="handleDateChange"
-      :min="minDate"
-      class="date-input"
-      placeholder="Select start date"
-    />
-    <p v-if="selectedDate" class="date-info">
-      Selected: {{ formatDate(selectedDate) }}
-    </p>
+    <button 
+      type="button"
+      @click="showDateInput = true"
+      class="date-icon-button"
+      :title="selectedDate ? formatDate(selectedDate) : 'Select travel date (Optional)'"
+      :class="{ 'has-date': selectedDate }"
+    >
+      <span class="date-icon">📅</span>
+      <input 
+        type="date" 
+        ref="dateInput"
+        v-model="selectedDate"
+        @change="handleDateChange"
+        :min="minDate"
+        class="date-input-hidden"
+        @blur="showDateInput = false"
+      />
+    </button>
   </div>
 </template>
 
@@ -35,6 +38,8 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'date-selected'])
 
 const selectedDate = ref(props.modelValue)
+const showDateInput = ref(false)
+const dateInput = ref(null)
 
 const minDate = computed(() => {
   const date = props.minDate
@@ -44,6 +49,9 @@ const minDate = computed(() => {
 const handleDateChange = () => {
   emit('update:modelValue', selectedDate.value)
   emit('date-selected', selectedDate.value)
+  if (dateInput.value && showDateInput.value) {
+    dateInput.value.click()
+  }
 }
 
 const formatDate = (dateString) => {
@@ -59,51 +67,57 @@ const formatDate = (dateString) => {
 
 <style scoped>
 .date-picker-container {
-  margin: 1rem 0;
+  margin: 0;
 }
 
-.date-label {
+.date-icon-button {
+  background: white;
+  border: 2px solid #4CAF50;
+  border-radius: 50%;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #202123;
-  margin-bottom: 0.5rem;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  width: 48px;
+  height: 48px;
+  position: relative;
 }
 
-.label-icon {
-  font-size: 1.2rem;
+.date-icon-button:hover {
+  background: #4CAF50;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
-.label-text {
-  color: #6E6E80;
+.date-icon-button.has-date {
+  background: #4CAF50;
+  border-color: #4CAF50;
+  color: white;
 }
 
-.date-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #E5E5E5;
-  border-radius: 6px;
-  font-size: 1rem;
-  transition: all 0.15s;
-  background: white;
+.date-icon-button.has-date:hover {
+  background: #45a049;
+  border-color: #45a049;
 }
 
-.date-input:hover {
-  border-color: #10A37F;
+.date-icon {
+  font-size: 1.5rem;
+  display: block;
 }
 
-.date-input:focus {
-  outline: none;
-  border-color: #10A37F;
-  box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.1);
+.date-icon-button.has-date .date-icon {
+  filter: brightness(0) invert(1);
 }
 
-.date-info {
-  margin-top: 0.5rem;
-  font-size: 0.9rem;
-  color: #10A37F;
-  font-weight: 500;
+.date-input-hidden {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
 }
 </style>

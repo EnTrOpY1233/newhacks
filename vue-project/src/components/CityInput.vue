@@ -530,11 +530,13 @@ onMounted(() => {
 }
 
 .input-wrapper {
+  display: flex;
+  gap: 1rem;
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
   gap: 1rem;
   margin-bottom: 2rem;
-  align-items: stretch;
+  align-items: center;
 }
 
 .options-row {
@@ -546,6 +548,13 @@ onMounted(() => {
 .speech-input-wrapper {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+}
+
+.date-picker-wrapper {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .date-picker-wrapper {
@@ -1187,11 +1196,17 @@ input[type="range"]::-moz-range-track {
 
 @media (max-width: 768px) {
   .input-wrapper {
-    flex-direction: column;
+    flex-wrap: wrap;
+  }
+  
+  .speech-input-wrapper,
+  .date-picker-wrapper {
+    flex-shrink: 0;
   }
   
   .search-button {
-    width: 100%;
+    flex: 1;
+    min-width: 100px;
   }
   
   .options-grid {

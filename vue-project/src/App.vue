@@ -46,7 +46,7 @@
 
       <div v-if="itinerary" class="content-grid">
         <div class="left-panel">
-          <ItineraryDisplay :itinerary="itinerary" @play-audio="handlePlayAudio" />
+          <ItineraryDisplay :itinerary="itinerary" :weather-forecast="weatherForecast" @play-audio="handlePlayAudio" />
         </div>
         
         <div class="right-panel">
@@ -108,6 +108,7 @@ const confirmedPlace = ref(null)
 const itinerary = ref(null)
 const posterImage = ref(null)
 const weatherInfo = ref(null)
+const weatherForecast = ref(null)
 const eventsInfo = ref([])
 const travelOptions = ref({
   days: 3,
@@ -158,6 +159,7 @@ const generateItinerary = async (place) => {
   itinerary.value = null
   posterImage.value = null
   weatherInfo.value = null
+  weatherForecast.value = null
   eventsInfo.value = []
 
   try {
@@ -165,6 +167,9 @@ const generateItinerary = async (place) => {
     if (travelOptions.value.start_date) {
       await fetchWeatherAndEvents(cityName, place, travelOptions.value.start_date)
     }
+
+    // Fetch weather forecast for the itinerary days
+    await fetchWeatherForecast(cityName, place, travelOptions.value.days)
 
     const response = await fetch(`${API_BASE_URL}/api/generate-itinerary`, {
       method: 'POST',
@@ -205,6 +210,34 @@ const generateItinerary = async (place) => {
     console.error('Error:', err)
   } finally {
     loading.value = false
+  }
+}
+
+/**
+ * Fetch weather forecast for multiple days
+ */
+const fetchWeatherForecast = async (city, place, days) => {
+  try {
+    const forecastResponse = await fetch(`${API_BASE_URL}/api/weather-forecast`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        city: city,
+        lat: place.location?.lat,
+        lon: place.location?.lng,
+        days: days
+      })
+    })
+    
+    if (forecastResponse.ok) {
+      const forecastData = await forecastResponse.json()
+      weatherForecast.value = forecastData.forecast
+    }
+  } catch (err) {
+    console.warn('Failed to fetch weather forecast:', err)
+    // Don't fail the whole process if forecast fails
   }
 }
 
