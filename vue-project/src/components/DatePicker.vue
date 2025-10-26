@@ -2,7 +2,7 @@
   <div class="date-picker-container">
     <button 
       type="button"
-      @click="showDateInput = true"
+      @click="openDatePicker"
       class="date-icon-button"
       :title="selectedDate ? formatDate(selectedDate) : 'Select travel date (Optional)'"
       :class="{ 'has-date': selectedDate }"
@@ -15,7 +15,6 @@
         @change="handleDateChange"
         :min="minDate"
         class="date-input-hidden"
-        @blur="showDateInput = false"
       />
     </button>
   </div>
@@ -38,7 +37,6 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'date-selected'])
 
 const selectedDate = ref(props.modelValue)
-const showDateInput = ref(false)
 const dateInput = ref(null)
 
 const minDate = computed(() => {
@@ -46,12 +44,17 @@ const minDate = computed(() => {
   return date.toISOString().split('T')[0]
 })
 
+// Function to trigger the date picker
+const openDatePicker = (event) => {
+  event.preventDefault()
+  if (dateInput.value) {
+    dateInput.value.click()
+  }
+}
+
 const handleDateChange = () => {
   emit('update:modelValue', selectedDate.value)
   emit('date-selected', selectedDate.value)
-  if (dateInput.value && showDateInput.value) {
-    dateInput.value.click()
-  }
 }
 
 const formatDate = (dateString) => {
@@ -85,6 +88,7 @@ const formatDate = (dateString) => {
   width: 48px;
   height: 48px;
   position: relative;
+  z-index: 0;
 }
 
 .date-icon-button:hover {
@@ -115,9 +119,12 @@ const formatDate = (dateString) => {
 
 .date-input-hidden {
   position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   opacity: 0;
-  pointer-events: none;
-  width: 0;
-  height: 0;
+  cursor: pointer;
+  z-index: 1;
 }
 </style>

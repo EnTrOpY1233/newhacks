@@ -532,17 +532,8 @@ onMounted(() => {
 .input-wrapper {
   display: flex;
   gap: 1rem;
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 1rem;
   margin-bottom: 2rem;
   align-items: center;
-}
-
-.options-row {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
 }
 
 .speech-input-wrapper {
@@ -555,30 +546,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-}
-
-.date-picker-wrapper {
-  display: flex;
-  align-items: center;
-}
-
-/* Mobile responsive */
-@media (max-width: 1024px) {
-  .input-wrapper {
-    grid-template-columns: 1fr;
-  }
-  
-  .options-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .options-row {
-    grid-template-columns: 1fr;
-  }
 }
 
 .input-group {
