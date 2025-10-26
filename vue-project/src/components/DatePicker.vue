@@ -6,7 +6,8 @@
       :title="selectedDate ? formatDate(selectedDate) : 'Select travel date (Optional)'"
       @click="triggerDatePicker"
     >
-      <span class="date-icon">📅</span>
+      <span class="date-icon" v-if="!selectedDate">📅</span>
+      <span class="date-icon checkmark" v-else>✓</span>
     </div>
     <input 
       type="date" 
@@ -110,8 +111,19 @@ const formatDate = (dateString) => {
   pointer-events: none;
 }
 
+.date-icon.checkmark {
+  font-size: 2rem;
+  font-weight: bold;
+  color: white;
+}
+
 .date-icon-button.has-date .date-icon {
   filter: brightness(0) invert(1);
+}
+
+.date-icon-button.has-date .date-icon.checkmark {
+  filter: none;
+  color: white;
 }
 
 .date-input-completely-hidden {
