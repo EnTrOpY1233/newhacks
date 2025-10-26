@@ -402,30 +402,48 @@ def generate_audio():
         # Generate narration text
         text = f"{place_name}. {description}"
 
-        # Use ElevenLabs to generate voice
+        # Use ElevenLabs to generate voice (using new client API)
         try:
-            from elevenlabs import generate, save
-            audio = generate(
+            from elevenlabs.client import ElevenLabs
+            
+            # Initialize ElevenLabs client
+            client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+            
+            # Generate audio using text-to-speech
+            audio_generator = client.text_to_speech.convert(
                 text=text,
-                voice="Bella",  # Can choose different voices
-                api_key=ELEVENLABS_API_KEY
+                voice_id="JBFqnCBsd6RMkjVDRZzb",  # George voice (clear, professional)
+                model_id="eleven_multilingual_v2",  # Supports multiple languages
+                output_format="mp3_44100_128",
             )
-
+            
             # Save audio file
-            audio_filename = f"{place_name.replace(' ', '_')}.mp3"
+            audio_filename = f"{place_name.replace(' ', '_').replace('/', '_')}.mp3"
             audio_path = os.path.join(AUDIO_FOLDER, audio_filename)
-            save(audio, audio_path)
+            
+            # Write audio bytes to file
+            with open(audio_path, 'wb') as audio_file:
+                for chunk in audio_generator:
+                    audio_file.write(chunk)
 
-            logger.info(f"Successfully generated audio for {place_name}")
+            logger.info(f"✅ Successfully generated audio for {place_name}")
 
             # Return audio URL
             return jsonify({
-                'audio_url': f'/api/audio/{audio_filename}'
+                'audio_url': f'/api/audio/{audio_filename}',
+                'place_name': place_name
             })
-        except ImportError:
+        except ImportError as e:
+            logger.warning(f"ElevenLabs library not installed: {e}")
             return jsonify({
                 'audio_url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
                 'message': 'ElevenLabs library not installed, returning sample audio'
+            })
+        except Exception as e:
+            logger.error(f"Error calling ElevenLabs API: {str(e)}")
+            return jsonify({
+                'audio_url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+                'message': f'Failed to generate audio: {str(e)}'
             })
 
     except Exception as e:

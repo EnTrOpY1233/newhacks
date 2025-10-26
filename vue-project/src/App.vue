@@ -36,12 +36,28 @@
         </div>
       </div>
 
-      <AudioPlayer 
-        v-if="currentAudio" 
-        :audio-url="currentAudio.url" 
-        :title="currentAudio.title" 
-        @close="currentAudio = null"
-      />
+      <!-- Hidden audio player for direct playback -->
+      <audio 
+        ref="audioPlayer"
+        @ended="isPlayingAudio = false"
+        @pause="isPlayingAudio = false"
+        @play="isPlayingAudio = true"
+        style="display: none;"
+      >
+        Your browser does not support audio playback
+      </audio>
+
+      <!-- Audio notification toast -->
+      <transition name="toast-fade">
+        <div v-if="audioNotification" class="audio-toast">
+          <div class="toast-icon">🔊</div>
+          <div class="toast-content">
+            <div class="toast-title">{{ audioNotification.title }}</div>
+            <div class="toast-status">{{ audioNotification.status }}</div>
+          </div>
+          <button @click="stopAudio" class="toast-close">✕</button>
+        </div>
+      </transition>
 
       <div v-if="posterImage" class="poster-section">
         <h3>Destination Poster</h3>
@@ -71,13 +87,18 @@ const error = ref(null)
 const currentCity = ref('')
 const confirmedPlace = ref(null)
 const itinerary = ref(null)
-const currentAudio = ref(null)
 const posterImage = ref(null)
 const travelOptions = ref({
   days: 3,
   intensity: 'moderate',
   preferences: []
 })
+
+// Audio player refs and state
+const audioPlayer = ref(null)
+const isPlayingAudio = ref(false)
+const audioNotification = ref(null)
+let audioNotificationTimer = null
 
 // Use environment variable or empty string for same-origin (proxied) requests
 // Empty string = relative URLs (e.g., "/api/...") which will be proxied by Vite dev server
@@ -157,8 +178,16 @@ const generateItinerary = async (place) => {
   }
 }
 
+/**
+ * Handle play audio button click
+ * Directly plays audio without modal popup
+ * @param {Object} place - Place object with name and description
+ */
 const handlePlayAudio = async (place) => {
   try {
+    // Show loading notification
+    showAudioNotification(place.name, 'Generating audio...')
+    
     const response = await fetch(`${API_BASE_URL}/api/generate-audio`, {
       method: 'POST',
       headers: {
@@ -175,14 +204,71 @@ const handlePlayAudio = async (place) => {
     }
 
     const data = await response.json()
-    currentAudio.value = {
-      url: data.audio_url,
-      title: place.name
+    
+    // Update notification
+    showAudioNotification(place.name, 'Playing...')
+    
+    // Set audio source and play
+    if (audioPlayer.value) {
+      const audioUrl = data.audio_url
+      // If relative URL, prepend API_BASE_URL
+      const fullAudioUrl = audioUrl.startsWith('http') ? audioUrl : `${API_BASE_URL}${audioUrl}`
+      
+      audioPlayer.value.src = fullAudioUrl
+      audioPlayer.value.volume = 0.7
+      
+      // Play audio
+      await audioPlayer.value.play()
+      
+      console.log('✅ Audio playing:', place.name)
     }
   } catch (err) {
-    error.value = err.message || 'Audio generation failed'
+    showAudioNotification(place.name, 'Failed to play audio', true)
     console.error('Audio error:', err)
+    
+    // Auto-hide error notification after 3 seconds
+    setTimeout(() => {
+      audioNotification.value = null
+    }, 3000)
   }
+}
+
+/**
+ * Show audio notification toast
+ * @param {String} title - Place name
+ * @param {String} status - Status message
+ * @param {Boolean} isError - Whether this is an error notification
+ */
+const showAudioNotification = (title, status, isError = false) => {
+  // Clear existing timer
+  if (audioNotificationTimer) {
+    clearTimeout(audioNotificationTimer)
+  }
+  
+  audioNotification.value = {
+    title,
+    status,
+    isError
+  }
+  
+  // Auto-hide notification after 5 seconds (unless it's generating or playing)
+  if (status !== 'Playing...' && status !== 'Generating audio...') {
+    audioNotificationTimer = setTimeout(() => {
+      audioNotification.value = null
+    }, 5000)
+  }
+}
+
+/**
+ * Stop currently playing audio
+ */
+const stopAudio = () => {
+  if (audioPlayer.value) {
+    audioPlayer.value.pause()
+    audioPlayer.value.currentTime = 0
+  }
+  audioNotification.value = null
+  isPlayingAudio.value = false
 }
 </script>
 
@@ -326,6 +412,94 @@ body {
   padding: 1.5rem;
   margin-top: 2rem;
   font-size: 0.9rem;
+}
+
+/* Audio Toast Notification */
+.audio-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 3000;
+  min-width: 300px;
+  border: 2px solid #10A37F;
+}
+
+.toast-icon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.toast-content {
+  flex: 1;
+}
+
+.toast-title {
+  font-weight: 600;
+  color: #202123;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.toast-status {
+  color: #10A37F;
+  font-size: 0.9rem;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: #9CA3AF;
+  cursor: pointer;
+  padding: 0.25rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.toast-close:hover {
+  background: #F3F4F6;
+  color: #202123;
+}
+
+/* Toast animation */
+.toast-fade-enter-active, .toast-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-fade-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.toast-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+/* Mobile positioning */
+@media (max-width: 768px) {
+  .audio-toast {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    min-width: auto;
+  }
 }
 
 @media (max-width: 968px) {
