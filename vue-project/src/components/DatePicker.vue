@@ -1,8 +1,10 @@
 <template>
   <div class="date-picker-container">
-    <div class="date-icon-button"
-         :class="{ 'has-date': selectedDate }"
-         :title="selectedDate ? formatDate(selectedDate) : 'Select travel date (Optional)'">
+    <label 
+      class="date-icon-button"
+      :class="{ 'has-date': selectedDate }"
+      :title="selectedDate ? formatDate(selectedDate) : 'Select travel date (Optional)'"
+    >
       <span class="date-icon">📅</span>
       <input 
         type="date" 
@@ -10,9 +12,9 @@
         v-model="selectedDate"
         @change="handleDateChange"
         :min="minDate"
-        class="date-input-overlay"
+        class="date-input-hidden"
       />
-    </div>
+    </label>
   </div>
 </template>
 
@@ -105,16 +107,15 @@ const formatDate = (dateString) => {
   filter: brightness(0) invert(1);
 }
 
-.date-input-overlay {
+.date-input-hidden {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-  z-index: 10;
+  width: 1px;
+  height: 1px;
   padding: 0;
-  border: none;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 </style>
